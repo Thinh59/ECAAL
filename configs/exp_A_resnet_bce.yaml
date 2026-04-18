@@ -1,0 +1,26 @@
+# Exp A — Baseline: ResNet50 + BCE
+seed: 42
+num_epochs: 20
+output_dir: /kaggle/working/outputs
+
+model:
+  backbone: resnet50
+  num_classes: 80
+  use_cbam: false
+  pretrained: true
+  dropout: 0.3
+
+loss:
+  name: bce
+
+optimizer:
+  lr: 3.0e-4
+  weight_decay: 1.0e-4
+
+data:
+  dataset: coco
+  data_root: /kaggle/input/coco-2017-dataset
+  subset_ids_path: /kaggle/working/data/coco_subset
+  batch_size: 64
+  num_workers: 2
+  img_size: 224
