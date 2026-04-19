@@ -22,7 +22,7 @@ optimizer:
 
 data:
   dataset: coco
-  data_root: /kaggle/input/coco-2017-dataset
+  data_root: /kaggle/input/datasets/awsaf49/coco-2017-dataset/coco2017
   subset_ids_path: /kaggle/working/data/coco_subset
   batch_size: 64
   num_workers: 2

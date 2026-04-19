@@ -108,7 +108,7 @@ loss: asl
 
 1. **Create New Notebook**
 2. **Add Dataset**: COCO 2017 by awsaf49
-3. **Upload Files**: src/, configs/, notebooks/
+3. **Clone repo**
 4. **Run**: Open `notebooks/kaggle_run.ipynb`
 
 **Expected Runtime**: ~25-40 min per experiment on T4
