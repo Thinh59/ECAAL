@@ -23,7 +23,7 @@ from evaluate import evaluate_model
 from utils    import AverageMeter, Logger, save_checkpoint, set_seed
 
 
-def train_one_epoch(model, loader, optimizer, criterion, scheduler, device, scaler):
+def train_one_epoch(model, loader, optimizer, criterion, scheduler, device, scaler, max_norm=1.0):
     model.train()
     meter = AverageMeter()
 
@@ -40,7 +40,7 @@ def train_one_epoch(model, loader, optimizer, criterion, scheduler, device, scal
 
         scaler.scale(loss).backward()
         scaler.unscale_(optimizer)
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=max_norm)
         scaler.step(optimizer)
         scaler.update()
         scheduler.step()
@@ -98,13 +98,16 @@ def run(config_path: str):
     # AMP scaler (PyTorch ≥ 2.0)
     scaler = torch.amp.GradScaler('cuda')
 
+    max_norm = cfg.get('max_norm', 1.0)   # per-experiment gradient clipping
+
     logger   = Logger(str(out_dir / 'log.json'))
     best_map = 0.0
 
     for epoch in range(1, n_epochs + 1):
         print(f"\n--- Epoch {epoch}/{n_epochs} ---")
         train_loss = train_one_epoch(
-            model, train_loader, optimizer, criterion, scheduler, device, scaler
+            model, train_loader, optimizer, criterion, scheduler, device, scaler,
+            max_norm=max_norm
         )
 
         # Validate mỗi 2 epoch (tiết kiệm thời gian Kaggle)
