@@ -25,7 +25,7 @@ max_norm: 0.5         # Gradient clipping chặt hơn (ResNet dùng 1.0)
 
 data:
   dataset: coco
-  data_root: /kaggle/input/datasets/awsaf49/coco-2017-dataset/coco2017
+  data_root: /kaggle/input/coco-2017-dataset/coco2017
   subset_ids_path: /kaggle/working/data/coco_subset
   batch_size: 64
   num_workers: 2

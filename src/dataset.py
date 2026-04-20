@@ -235,9 +235,11 @@ def get_dataloaders(cfg: dict):
             tf = os.path.join(sp, 'subset_train_ids.json')
             vf = os.path.join(sp, 'subset_val_ids.json')
             if os.path.exists(tf):
-                train_ids = json.load(open(tf))
+                with open(tf) as fh:
+                    train_ids = json.load(fh)
             if os.path.exists(vf):
-                val_ids   = json.load(open(vf))
+                with open(vf) as fh:
+                    val_ids   = json.load(fh)
 
         train_ds = COCOMultiLabelDataset(root, 'train', train_tf, train_ids)
         val_ds   = COCOMultiLabelDataset(root, 'val',   val_tf,   val_ids)

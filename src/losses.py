@@ -95,6 +95,7 @@ class AsymmetricLoss(nn.Module):
             xs_pos_shifted = (xs_pos - self.clip).clamp(min=0)
             xs_neg_shifted = 1.0 - xs_pos_shifted  # 1 - max(p - m, 0) = min(1 - p + m, 1)
         else:
+            xs_pos_shifted = xs_pos   # no shift → giữ nguyên
             xs_neg_shifted = xs_neg
 
         # Log-likelihood của từng branch

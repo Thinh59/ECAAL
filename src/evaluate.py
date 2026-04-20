@@ -43,7 +43,8 @@ def evaluate_model(model: torch.nn.Module, loader, device: str = 'cuda') -> dict
     all_probs, all_targets = [], []
 
     for imgs, targets in loader:
-        logits = model(imgs.to(device))
+        with torch.amp.autocast('cuda', enabled=(str(device) != 'cpu')):
+            logits = model(imgs.to(device))
         probs  = torch.sigmoid(logits).cpu().numpy()
         all_probs.append(probs)
         all_targets.append(targets.numpy())
