@@ -20,12 +20,13 @@ loss:
   # NaN trong log_fix.json là do lr quá cao sau epoch 10, không phải do eps.
 
 optimizer:
-  lr: 3.0e-4
+  lr: 1.0e-3  #3.0e-4
   weight_decay: 1.0e-4
 
 # max_norm KHÔNG set ở đây — default 1.0 trong train.py là tốt.
 # retrain_multiseed notebook suggest max_norm=0.5 nhưng đó là cho
 # scenario NaN-recovery, không cần thiết với config chuẩn này.
+max_norm: 0.5 
 
 data:
   dataset: coco

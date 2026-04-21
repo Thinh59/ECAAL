@@ -5,7 +5,7 @@ Lưu ý: dùng sklearn.metrics.average_precision_score (area under PR curve),
 KHÔNG phải COCO eval API (khác nhau về interpolation).
 Khi báo cáo kết quả cần ghi rõ đang dùng phương pháp nào.
 
-FIX: Bỏ torch.amp.mixed_precision trong evaluate_model — evaluate cần fp32 precision
+FIXXXX: Bỏ torch.amp.mixed_precision trong evaluate_model — evaluate cần fp32 precision
      để sigmoid + numpy chính xác. Việc dùng chế độ tự động ép kiểu trong eval không cần thiết và
      có thể gây sai số nhỏ ảnh hưởng mAP.
 """
