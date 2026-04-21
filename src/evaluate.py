@@ -5,8 +5,8 @@ Lưu ý: dùng sklearn.metrics.average_precision_score (area under PR curve),
 KHÔNG phải COCO eval API (khác nhau về interpolation).
 Khi báo cáo kết quả cần ghi rõ đang dùng phương pháp nào.
 
-FIX: Bỏ torch.amp.autocast trong evaluate_model — evaluate cần fp32 precision
-     để sigmoid + numpy chính xác. autocast trong eval không cần thiết và
+FIX: Bỏ torch.amp.mixed_precision trong evaluate_model — evaluate cần fp32 precision
+     để sigmoid + numpy chính xác. Việc dùng chế độ tự động ép kiểu trong eval không cần thiết và
      có thể gây sai số nhỏ ảnh hưởng mAP.
 """
 
@@ -44,15 +44,15 @@ def compute_f1(targets: np.ndarray, probs: np.ndarray,
 @torch.no_grad()
 def evaluate_model(model: torch.nn.Module, loader, device: str = 'cuda') -> dict:
     """
-    FIX (branch_fix → master): KHÔNG dùng autocast trong evaluate.
-    autocast → fp16 → sigmoid precision thấp hơn → mAP thấp hơn (~2-3%).
+    FIX (branch_fix → master): KHÔNG dùng chế độ tự động ép kiểu trong evaluate.
+    fp16 → sigmoid precision thấp hơn → mAP thấp hơn (~2-3%).
     Evaluate luôn chạy fp32 để đảm bảo kết quả chính xác.
     """
     model.eval()
     all_probs, all_targets = [], []
 
     for imgs, targets in loader:
-        # FIX: không có autocast ở đây — fp32 cho evaluation
+        # FIX: không dùng chế độ ép kiểu tự động ở đây — fp32 cho evaluation
         logits = model(imgs.to(device))
         probs  = torch.sigmoid(logits).cpu().numpy()
         all_probs.append(probs)
