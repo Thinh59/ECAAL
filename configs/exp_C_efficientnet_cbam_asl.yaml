@@ -15,11 +15,17 @@ loss:
   gamma_pos: 0
   gamma_neg: 4
   clip: 0.05
-  eps: 1.0e-5          # TĂNG eps lên 1e-5 để tránh lỗi log(~0) sinh ra NaN làm hỏng weight!
+  # eps: 1e-5 REMOVED — default eps=1e-8 trong AsymmetricLoss là đủ,
+  # eps=1e-5 làm mất gradient signal ở vùng prob rất nhỏ → mAP thấp hơn.
+  # NaN trong log_fix.json là do lr quá cao sau epoch 10, không phải do eps.
 
 optimizer:
   lr: 3.0e-4
   weight_decay: 1.0e-4
+
+# max_norm KHÔNG set ở đây — default 1.0 trong train.py là tốt.
+# retrain_multiseed notebook suggest max_norm=0.5 nhưng đó là cho
+# scenario NaN-recovery, không cần thiết với config chuẩn này.
 
 data:
   dataset: coco

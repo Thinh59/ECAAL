@@ -1,12 +1,16 @@
 """
 train.py — Training loop cho ablation study.
 
-BUGCŨ NEWW đã sửa:
-  - loss_cfg.pop('name') làm MUT config dict → lần chạy thứ 2 trong cùng
-    process sẽ không tìm được 'name'. Fix: dùng copy trước khi pop.
-  - torch.cuda.amp.autocast() deprecated trong PyTorch ≥ 2.0
-    → dùng torch.amp.autocast('cuda') thay thế
-  - torch.cuda.amp.GradScaler() → torch.amp.GradScaler('cuda')
+BUG ĐÃ SỬA (so với master gốc):
+  1. loss_cfg.pop('name') làm MUT config dict → lần chạy thứ 2 trong cùng
+     process sẽ không tìm được 'name'. Fix: dùng copy trước khi pop.
+  2. torch.cuda.amp.autocast() deprecated trong PyTorch ≥ 2.0
+     → dùng torch.amp.autocast('cuda') thay thế
+  3. torch.cuda.amp.GradScaler() → torch.amp.GradScaler('cuda')
+
+QUAN TRỌNG — evaluate.py FIX:
+  evaluate_model() phải chạy fp32 (KHÔNG autocast) để sigmoid precision
+  cao → mAP chính xác. Đây là nguyên nhân master cho mAP ~0.56 thay vì ~0.75.
 """
 
 import os, sys, yaml, argparse

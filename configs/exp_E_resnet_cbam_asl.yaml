@@ -1,4 +1,6 @@
-# Exp E — ResNet50 + CBAM + ASL (full model trên backbone mạnh)
+# Exp E — ResNet50 + CBAM + ASL
+# Mục đích: ablation CBAM trên backbone ResNet50 (so sánh với Exp B: ResNet50+ASL không CBAM)
+# Expected mAP: ~0.71-0.73 (cao hơn Exp B ~0.70 do CBAM)
 seed: 42
 num_epochs: 20
 output_dir: /kaggle/working/outputs
@@ -15,6 +17,7 @@ loss:
   gamma_pos: 0
   gamma_neg: 4
   clip: 0.05
+  # eps dùng default 1e-8 — đủ stable với ResNet50 + gradient clipping
 
 optimizer:
   lr: 3.0e-4

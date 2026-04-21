@@ -1,4 +1,6 @@
-# Exp F — EfficientNet-B0 + ASL (không CBAM, cô lập backbone effect)
+# Exp F — EfficientNet-B0 + ASL (không CBAM)
+# Mục đích: ablation CBAM trên backbone EfficientNet (so sánh với Exp C: EffNet+CBAM+ASL)
+# Expected mAP: ~0.70-0.72 (thấp hơn Exp C ~0.75 → chứng minh CBAM đóng góp ~3-5%)
 seed: 42
 num_epochs: 20
 output_dir: /kaggle/working/outputs
@@ -15,6 +17,7 @@ loss:
   gamma_pos: 0
   gamma_neg: 4
   clip: 0.05
+  # eps dùng default 1e-8
 
 optimizer:
   lr: 3.0e-4
