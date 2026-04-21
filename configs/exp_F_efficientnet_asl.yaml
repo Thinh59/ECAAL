@@ -1,4 +1,4 @@
-# Exp C — Full model: EfficientNet-B0 + CBAM + ASL
+# Exp F — EfficientNet-B0 + ASL (không CBAM, cô lập backbone effect)
 seed: 42
 num_epochs: 20
 output_dir: /kaggle/working/outputs
@@ -6,7 +6,7 @@ output_dir: /kaggle/working/outputs
 model:
   backbone: efficientnet_b0
   num_classes: 80
-  use_cbam: true
+  use_cbam: false
   pretrained: true
   dropout: 0.3
 
@@ -15,13 +15,10 @@ loss:
   gamma_pos: 0
   gamma_neg: 4
   clip: 0.05
-  # eps default=1e-8 (KHÔNG đổi — log_fix đạt 0.75 với eps=1e-8)
 
 optimizer:
-  lr: 3.0e-4          # Giống Exp B (ASL fix + eps=1e-5 đã xử lý NaN)
+  lr: 3.0e-4
   weight_decay: 1.0e-4
-
-max_norm: 1.0         # Default (ASL fix đã ổn định, không cần clipping chặt)
 
 data:
   dataset: coco
