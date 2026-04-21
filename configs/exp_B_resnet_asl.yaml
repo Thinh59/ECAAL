@@ -15,6 +15,7 @@ loss:
   gamma_pos: 0
   gamma_neg: 4
   clip: 0.05
+  eps: 1.0e-5
 
 optimizer:
   lr: 3.0e-4

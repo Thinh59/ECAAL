@@ -18,10 +18,10 @@ loss:
   eps: 1.0e-5          # Tăng eps 1e-8→1e-5 để tránh log(~0) → NaN
 
 optimizer:
-  lr: 1.0e-4          # Giảm 3x so với ResNet (EfficientNet+CBAM nhạy cảm hơn)
+  lr: 3.0e-4          # Giống Exp B (ASL fix + eps=1e-5 đã xử lý NaN)
   weight_decay: 1.0e-4
 
-max_norm: 0.5         # Gradient clipping chặt hơn (ResNet dùng 1.0)
+max_norm: 1.0         # Default (ASL fix đã ổn định, không cần clipping chặt)
 
 data:
   dataset: coco
