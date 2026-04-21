@@ -118,46 +118,68 @@ class COCOMultiLabelDataset(Dataset):
 
 
 def create_coco_subset(coco_root: str, output_dir: str,
-                       num_train: int = 16000, num_val: int = 4000,
-                       seed: int = 42):
+                       num_train: int = 16000, num_val: int = 1000,
+                       num_test: int = 4000, seed: int = 42):
     """
     Tạo stratified subset của COCO 2017.
+    - Train: num_train ảnh từ train2017
+    - Val:   num_val   ảnh từ val2017
+    - Test:  num_test  ảnh từ val2017 (phần còn lại, KHÔNG trùng val)
+
     Stratification: ưu tiên lấy ảnh có nhiều nhãn đa dạng,
     đảm bảo mỗi class xuất hiện đủ trong subset.
     """
     random.seed(seed)
     np.random.seed(seed)
 
-    for split, n in [('train', num_train), ('val', num_val)]:
-        ann_file = os.path.join(coco_root, 'annotations',
-                                f'instances_{split}2017.json')
-        with open(ann_file) as f:
-            coco = json.load(f)
+    os.makedirs(output_dir, exist_ok=True)
 
-        # image_id → list of category_ids
-        img_cats: dict[int, list] = defaultdict(list)
-        for ann in coco['annotations']:
-            img_cats[ann['image_id']].append(ann['category_id'])
-
-        all_ids = list(img_cats.keys())
-
-        # Stratify: sắp xếp ảnh theo số lượng nhãn (nhiều nhãn trước)
-        # rồi lấy đều từ nhiều mức khác nhau
-        all_ids.sort(key=lambda i: -len(set(img_cats[i])))
-        # Lấy đều từ sorted list (đảm bảo cả ảnh ít nhãn và nhiều nhãn)
-        step = max(1, len(all_ids) // n)
-        selected = all_ids[::step][:n]
+    def _stratified_sample(all_ids, img_cats, n):
+        """Lấy n ảnh stratified từ danh sách all_ids."""
+        all_ids_sorted = sorted(all_ids, key=lambda i: -len(set(img_cats[i])))
+        step = max(1, len(all_ids_sorted) // n)
+        selected = all_ids_sorted[::step][:n]
         if len(selected) < n:
-            # Bổ sung ngẫu nhiên nếu chưa đủ
-            remaining = list(set(all_ids) - set(selected))
+            remaining = list(set(all_ids_sorted) - set(selected))
             random.shuffle(remaining)
             selected += remaining[:n - len(selected)]
+        return selected[:n]
 
-        os.makedirs(output_dir, exist_ok=True)
-        out_path = os.path.join(output_dir, f'subset_{split}_ids.json')
-        with open(out_path, 'w') as f:
-            json.dump(selected[:n], f)
-        print(f"[Subset] COCO 2017 {split}: {len(selected[:n])} ids → {out_path}")
+    # ── Train: từ train2017 ───────────────────────────────────────────────
+    ann_train = os.path.join(coco_root, 'annotations', 'instances_train2017.json')
+    with open(ann_train) as f:
+        coco_train = json.load(f)
+    img_cats_train: dict[int, list] = defaultdict(list)
+    for ann in coco_train['annotations']:
+        img_cats_train[ann['image_id']].append(ann['category_id'])
+    train_ids = _stratified_sample(list(img_cats_train.keys()), img_cats_train, num_train)
+    with open(os.path.join(output_dir, 'subset_train_ids.json'), 'w') as f:
+        json.dump(train_ids, f)
+    print(f"[Subset] COCO 2017 train: {len(train_ids)} ids")
+
+    # ── Val + Test: cả hai từ val2017 (không trùng nhau) ──────────────────
+    ann_val = os.path.join(coco_root, 'annotations', 'instances_val2017.json')
+    with open(ann_val) as f:
+        coco_val = json.load(f)
+    img_cats_val: dict[int, list] = defaultdict(list)
+    for ann in coco_val['annotations']:
+        img_cats_val[ann['image_id']].append(ann['category_id'])
+    all_val_ids = list(img_cats_val.keys())
+
+    # Lấy val trước (stratified)
+    val_ids = _stratified_sample(all_val_ids, img_cats_val, num_val)
+    val_set = set(val_ids)
+
+    # Test = phần còn lại của val2017 (stratified)
+    remaining_val = [i for i in all_val_ids if i not in val_set]
+    test_ids = _stratified_sample(remaining_val, img_cats_val, num_test)
+
+    with open(os.path.join(output_dir, 'subset_val_ids.json'), 'w') as f:
+        json.dump(val_ids, f)
+    with open(os.path.join(output_dir, 'subset_test_ids.json'), 'w') as f:
+        json.dump(test_ids, f)
+    print(f"[Subset] COCO 2017 val:  {len(val_ids)} ids")
+    print(f"[Subset] COCO 2017 test: {len(test_ids)} ids (from val2017, no overlap with val)")
 
 
 # ── Pascal VOC 2012 ───────────────────────────────────────────────────────────
