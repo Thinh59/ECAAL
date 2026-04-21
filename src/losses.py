@@ -72,12 +72,14 @@ class AsymmetricLoss(nn.Module):
     """
 
     def __init__(self, gamma_pos: float = 0, gamma_neg: float = 4,
-                 clip: float = 0.05, eps: float = 1e-8):
+                 clip: float = 0.05, eps: float = 1e-8,
+                 disable_torch_grad_focal_loss: bool = True):
         super().__init__()
         self.gamma_pos = gamma_pos
         self.gamma_neg = gamma_neg
         self.clip = clip
         self.eps = eps
+        self.disable_torch_grad_focal_loss = disable_torch_grad_focal_loss
 
     def forward(self, logits, targets):
         targets = targets.float()
@@ -104,13 +106,15 @@ class AsymmetricLoss(nn.Module):
         loss = los_pos + los_neg                 # (B, C), âm giá trị
 
         # Asymmetric focusing weights
+        # (Official ASL trick: detach weights khỏi gradient graph → ngăn gradient explosion → ngăn NaN)
         if self.gamma_pos > 0 or self.gamma_neg > 0:
-            # Với positive: weight = (1 - p)^gamma_pos
-            # Với negative: weight = p_shifted^gamma_neg (dùng xs_pos_shifted)
-            pos_w = torch.pow(1.0 - xs_pos,           self.gamma_pos)  # positive focusing
-            neg_w = torch.pow(xs_pos_shifted,         self.gamma_neg)  # negative focusing (dùng p_shifted)
-            # Ghép lại theo mask
+            if self.disable_torch_grad_focal_loss:
+                torch.set_grad_enabled(False)
+            pos_w = torch.pow(1.0 - xs_pos,           self.gamma_pos)
+            neg_w = torch.pow(xs_pos_shifted,         self.gamma_neg)
             asymmetric_w = targets * pos_w + (1 - targets) * neg_w
+            if self.disable_torch_grad_focal_loss:
+                torch.set_grad_enabled(True)
             loss = loss * asymmetric_w
 
         # Trả về loss trung bình theo batch (sum over classes, mean over batch)

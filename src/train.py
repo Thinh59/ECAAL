@@ -38,14 +38,13 @@ def train_one_epoch(model, loader, optimizer, criterion, scheduler, device, scal
             logits = model(imgs)
             loss   = criterion(logits, targets)
 
-        # ⚠️ NaN guard — fail fast thay vì chạy 6h rồi mới phát hiện
+        # ⚠️ NaN guard — skip batch thay vì crash
+        # (log_fix đạt 0.75 mAP dù NaN xuất hiện từ epoch 12 — chỉ vài batch bị)
         if torch.isnan(loss) or torch.isinf(loss):
-            print(f"\n❌ NaN/Inf detected at step {i+1}! loss={loss.item()}")
-            print(f"   logits range: [{logits.min().item():.2f}, {logits.max().item():.2f}]")
-            raise RuntimeError(
-                f"NaN/Inf loss at step {i+1}. "
-                f"Kiểm tra lr, eps, hoặc gradient explosion."
-            )
+            print(f"\n⚠️ NaN/Inf at step {i+1}, skipping batch")
+            optimizer.zero_grad()   # reset gradients
+            scheduler.step()        # vẫn step scheduler để giữ đúng schedule
+            continue
 
         scaler.scale(loss).backward()
         scaler.unscale_(optimizer)

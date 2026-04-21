@@ -1,6 +1,6 @@
 # Exp C — Full model: EfficientNet-B0 + CBAM + ASL
 seed: 42
-num_epochs: 20
+num_epochs: 25          # 20→25: model nhỏ cần thêm thời gian converge
 output_dir: /kaggle/working/outputs
 
 model:
@@ -8,14 +8,14 @@ model:
   num_classes: 80
   use_cbam: true
   pretrained: true
-  dropout: 0.3
+  dropout: 0.2            # 0.3→0.2: EfficientNet-B0 nhỏ, ít cần regularization
 
 loss:
   name: asl
   gamma_pos: 0
   gamma_neg: 4
   clip: 0.05
-  eps: 1.0e-5          # Tăng eps 1e-8→1e-5 để tránh log(~0) → NaN
+  # eps default=1e-8 (KHÔNG đổi — log_fix đạt 0.75 với eps=1e-8)
 
 optimizer:
   lr: 3.0e-4          # Giống Exp B (ASL fix + eps=1e-5 đã xử lý NaN)
