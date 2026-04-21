@@ -1,7 +1,7 @@
 """
 train.py — Training loop cho ablation study.
 
-BUGCŨ đã sửa:
+BUGCŨ NEWW đã sửa:
   - loss_cfg.pop('name') làm MUT config dict → lần chạy thứ 2 trong cùng
     process sẽ không tìm được 'name'. Fix: dùng copy trước khi pop.
   - torch.cuda.amp.autocast() deprecated trong PyTorch ≥ 2.0
