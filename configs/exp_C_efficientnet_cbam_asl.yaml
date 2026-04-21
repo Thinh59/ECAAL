@@ -15,6 +15,7 @@ loss:
   gamma_pos: 0
   gamma_neg: 4
   clip: 0.05
+  eps: 1.0e-5          # TĂNG eps lên 1e-5 để tránh lỗi log(~0) sinh ra NaN làm hỏng weight!
 
 optimizer:
   lr: 3.0e-4
