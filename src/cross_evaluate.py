@@ -82,7 +82,7 @@ def main():
     
     transform = get_val_transform(img_size=224)
     try:
-        voc_ds = VOCMultiLabelDataset(args.voc_root, split='val', transform=transform)
+        voc_ds = VOCMultiLabelDataset(args.voc_root, split='test', transform=transform)
         voc_loader = torch.utils.data.DataLoader(voc_ds, batch_size=64, num_workers=2)
     except Exception as e:
         print(f"❌ Không thể load VOC dataset: {e}")
@@ -119,7 +119,7 @@ def main():
                 'pretrained': False
             }).to(device)
             
-            state_dict = torch.load(pth_path, map_location=device)
+            state_dict = torch.load(pth_path, map_location=device, weights_only=False)
             model.load_state_dict(state_dict)
             
             metrics = evaluate_cross_dataset(model, voc_loader, device)
