@@ -1,0 +1,414 @@
+\documentclass{article}
+
+% --- TIẾNG VIỆT ---
+\usepackage[utf8]{inputenc}
+\usepackage[T5]{fontenc}
+\usepackage[vietnamese]{babel}
+
+% --- NEURIPS 2024 STYLE ---
+\usepackage[final]{neurips_2024}
+
+% --- PACKAGES ---
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{tabularx}
+
+% --- COLOR DEFINITIONS ---
+\definecolor{propblue}{RGB}{0, 82, 155}
+\definecolor{lightgray}{RGB}{245,245,245}
+\definecolor{sectionrule}{RGB}{0,82,155}
+
+% hyperref config
+\hypersetup{colorlinks=true, linkcolor=propblue, urlcolor=propblue, citecolor=propblue}
+
+% =====================================================================
+\title{%
+  \textbf{Đề cương Nghiên cứu}\\[4pt]
+  {\large Kiến trúc trích xuất đặc trưng tích hợp Cơ chế chú ý và}\\
+  {\large Hàm mất mát bất đối xứng trong Phân loại ảnh đa nhãn}
+}
+
+\author{%
+  Phan Huỳnh Châu Thịnh \\
+  MSSV: 23122019 \\
+  \texttt{23122019@student.hcmus.edu.vn}
+  \And
+  Hoàng Văn Sang \\
+  MSSV: 23120350 \\
+  \texttt{23120350@student.hcmus.edu.vn}
+}
+
+% =====================================================================
+\begin{document}
+\maketitle
+
+\begin{center}
+  {\small
+    \textit{Khoa Công nghệ Thông tin,
+    Trường Đại học Khoa học Tự nhiên,
+    Đại học Quốc gia TP.\ Hồ Chí Minh}
+  }
+\end{center}
+
+\vspace{6pt}
+\noindent\rule{\linewidth}{0.8pt}
+
+% =====================================================================
+\section*{Tóm tắt (Synopsis)}
+
+Đề tài này nghiên cứu bài toán \textbf{phân loại ảnh đa nhãn} (Multi-label Image
+Classification), trong đó mỗi bức ảnh có thể được gán đồng thời nhiều nhãn.
+Thách thức hiện tại là sự \textit{mất cân bằng nghiêm trọng} giữa số lượng nhãn
+dương tính (positive) và âm tính (negative) -- trên bộ dữ liệu MS~COCO~\cite{lin2014coco}, một ảnh trung
+bình chỉ chứa $2$--$3$ nhãn dương tính trong tổng số 80 lớp, khiến các hàm mất mát
+truyền thống như Binary Cross-Entropy (BCE) hội tụ kém.
+
+Đề tài đề xuất một kiến trúc gồm ba thành phần kết hợp: (i)~mạng backbone
+\textbf{EfficientNet-B0}~\cite{tan2019efficientnet} với lightweight có khả năng trích xuất đặc trưng hiệu quả; (ii)~module chú ý \textbf{CBAM}~\cite{woo2018cbam} đóng vai trò neck để tinh chỉnh các đặc trưng từ EfficientNet theo cả chiều kênh lẫn chiều không gian; và
+(iii)~\textbf{Hàm mất mát bất đối xứng (ASL)}~\cite{ridnik2021asl} xử lý riêng
+biệt nhãn dương và âm để giải quyết tốt vấn đề mất cân bằng nhãn.
+Mô hình sẽ được đánh giá qua các chỉ số mAP và Macro F1-score trên MS~COCO subset và Pascal VOC 2012.
+
+% =====================================================================
+\section{Tiêu đề đề tài (Project Title)}
+
+\begin{center}
+  \large\bfseries
+  Đánh giá Kiến trúc EfficientNet-B0 + CBAM + ASL\\
+  cho Bài toán phân loại ảnh đa nhãn\\ 
+\end{center}
+% So sánh với Phân tích Cắt bỏ Thành phần
+% =====================================================================
+\section{Người hướng dẫn nghiên cứu (Research Supervisor)}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ll}
+    \toprule
+    \textbf{Thông tin} & \textbf{Chi tiết} \\
+    \midrule
+    Họ và tên giảng viên & Võ Hoài Việt \\
+    Bộ môn & Thị giác Máy tính \\
+    Khoa & Khoa Công nghệ Thông tin \\
+    Trường & ĐH Khoa học Tự nhiên -- ĐHQG TP.HCM \\
+    Email & \texttt{vhviet@fit.hcmus.edu.vn} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% =====================================================================
+\section{Phương thức nghiên cứu đề xuất (Proposed Mode of Research)}
+
+Đây là nghiên cứu thực nghiệm
+trong lĩnh vực ứng dụng học sâu.
+Phương thức triển khai bao gồm:
+
+\begin{itemize}[leftmargin=1.8em]
+  \item \textbf{Dữ liệu:} Sử dụng các bộ dữ liệu ảnh chuẩn --
+        MS~COCO 2017 (80 lớp, subset 20\,000 ảnh) và Pascal VOC 2012 (20 lớp)
+  \item \textbf{Phương pháp:} Python/PyTorch, huấn luyện mô hình
+        trên Kaggle GPU (NVIDIA Tesla T4, 16\,GB VRAM).
+  \item \textbf{So sánh:} Thiết kế các ablation study, thay đổi
+        từng biến số độc lập (backbone, loss function, attention module) để đánh giá đóng góp của từng thành phần.
+  \item \textbf{Báo cáo:} Kết quả được trình bày dưới dạng bài báo hội thảo theo
+        định dạng IEEE
+\end{itemize}
+% , hướng đến nộp tại KSE (Knowledge and Systems Engineering Conference).
+% =====================================================================
+\section{Mục tiêu và Câu hỏi Nghiên cứu (Aims and Objectives)}
+
+\subsection*{Mục tiêu tổng quát (Aim)}
+
+Chứng minh rằng sự kết hợp giữa backbone EfficientNet-B0, module
+chú ý CBAM, và hàm mất mát bất đối xứng ASL có thể tạo ra hiệu ứng cộng hưởng giữa các thuật toán giúp cải thiện đáng kể hiệu năng phân loại đa nhãn so với các
+phương pháp cơ sở, trong điều kiện phần cứng hạn chế. (GPU T4)
+
+\subsection*{Các mục tiêu cụ thể (Objectives)}
+
+Các mục tiêu được sắp xếp theo trình tự logic, mỗi mục tiêu tiên quyết cho mục tiêu
+tiếp theo:
+
+\begin{enumerate}[leftmargin=2em, label=\textbf{O\arabic*.}]
+  \item \textbf{Công trình liên quan.} tài liệu về các kiến trúc trích xuất đặc trưng
+        (ResNet, EfficientNet), cơ chế chú ý (SE, CBAM), và hàm mất mát đa nhãn
+        (BCE, Focal Loss, ASL).
+
+  \item \textbf{Thực nghiệm.} ba biến thể mô hình tương ứng với ba trường hợp ablation study:
+        \begin{itemize}
+          \item \textbf{Exp~A:} ResNet50 + BCE (baseline).
+          \item \textbf{Exp~B:} ResNet50 + ASL (xem xét sự đóng góp của loss ASL).
+          \item \textbf{Exp~C:} EfficientNet-B0 + CBAM + ASL (mô hình đề xuất).
+        \end{itemize}
+
+  \item \textbf{Dữ liệu.} đầy đủ trên MS~COCO subset và Pascal VOC~2012,
+        với ít nhất 3 lần chạy độc lập (random seeds khác nhau) để đảm bảo tính
+        thống kê.
+
+  \item \textbf{Phương pháp đánh giá.} mAP và Macro F1-score; thực hiện phân tích
+        per-class AP để so sánh hiệu năng trên các lớp hiếm gặp và phổ biến.
+
+  \item \textbf{Phân tích và thảo luận.} cơ chế cộng hưởng giữa CBAM và ASL: liệu
+        CBAM có làm tăng xác suất dự đoán $p$ cho các đối tượng bị che khuất, từ
+        đó giúp ASL gradient amplification hoạt động hiệu quả hơn?
+\end{enumerate}
+%   \item \textbf{Viết và nộp} bài báo khoa học 6 trang định dạng IEEE.
+% =====================================================================
+\section{Bối cảnh và Tổng quan Tài liệu (Background)}
+
+\subsection{Bài toán Phân loại ảnh đa nhãn}
+
+Phân loại đa nhãn (Multi-label Classification) yêu cầu hệ thống nhận diện đồng
+thời nhiều đối tượng trong cùng một bức ảnh~\cite{zhang2014review}.
+Khác với phân loại đơn nhãn dùng hàm Softmax (tổng xác suất bằng 1), đa nhãn
+dùng hàm Sigmoid độc lập cho mỗi nhãn $p_i \in [0,1]$, xác suất không ảnh hưỡng lẫn nhau.
+Đay là vấn đế nền tảng của nhiều ứng dụng quan trọng: truy xuất ngữ nghĩa của ảnh,
+phân tích ảnh y tế có nhiều bệnh lý, nhận dạng trong xe tự lái, và kiểm duyệt nội dung.
+
+\subsection{Vấn đề mất cân bằng nhãn (Label Imbalance)}
+
+Trên MS~COCO (80 lớp), mỗi ảnh trung bình chỉ có $2$--$3$ nhãn dương tính, tức
+$\approx 77$ nhãn âm tính đi kèm. Binary Cross-Entropy (BCE) không có cơ chế
+xử lý với lượng gradient khổng lồ từ các easy negative, dẫn đến hiện tượng mô hình hội tụ sớm vào chiến lược dự đoán mọi
+nhãn là không xuất hiện, không còn dự đoán được các nhãn là positive.
+
+\subsection{Tiến hóa của hàm mất mát}
+
+\begin{table}[H]
+  \caption{So sánh các hàm mất mát cho bài toán phân loại đa nhãn.}
+  \label{tab:loss_compare}
+  \centering
+  \small
+  \begin{tabular}{lccc}
+    \toprule
+    \textbf{Hàm mất mát} & \textbf{Xử lý nhãn âm/dương} & \textbf{Chống easy negatives} & \textbf{Chống mislabel} \\
+    \midrule
+    BCE~\cite{goodfellow2016dl}    & Đối xứng   & Không   & Không \\
+    Focal Loss~\cite{lin2017focal} & Đối xứng   & Khá     & Thấp  \\
+    ASL~\cite{ridnik2021asl}       & Bất đối xứng & Tuyệt đối & Cao   \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\noindent\textbf{Asymmetric Loss (ASL)} được giới thiệu tại ICCV 2021~\cite{ridnik2021asl}
+với cấu trúc toán học tách biệt hai nhánh:
+
+\begin{equation}
+  L_{\mathrm{ASL}} =
+  \begin{cases}
+    (1-p)^{\gamma_{+}} \log(p) & \text{khi nhãn thực } y = 1 \\
+    (p_{\mathrm{shift}})^{\gamma_{-}} \log(1 - p_{\mathrm{shift}}) & \text{khi nhãn thực } y = 0
+  \end{cases}
+  \label{eq:asl}
+\end{equation}
+
+\noindent trong đó $p_{\mathrm{shift}} = \max(p - m,\; 0)$ với biên độ dịch chuyển
+$m$ (thường $m = 0.05$), và các tham số hội tụ $\gamma_{+} = 0$,
+$\gamma_{-} = 4$. Cơ chế này triệt tiêu hoàn toàn gradient của các nhãn âm có
+xác suất dưới ngưỡng $m$.
+
+\subsection{Cơ chế chú ý CBAM}
+
+CBAM (Convolutional Block Attention Module)~\cite{woo2018cbam} tinh chỉnh feature
+map qua hai bước tuần tự: \textit{Channel Attention} xác định kênh
+đặc trưng quan trọng bằng Global Average Pooling và Global Max Pooling qua MLP
+chia sẻ trọng số, sau đó \textit{Spatial Attention} tạo mặt nạ
+không gian 2D để định vị đối tượng trong ảnh.
+
+\subsection{EfficientNet-B0 và chiến lược Compound Scaling}
+
+EfficientNet~\cite{tan2019efficientnet} cân bằng đồng thời chiều sâu, chiều rộng
+và độ phân giải ảnh đầu vào theo hệ số mở rộng phức hợp (compound scaling).
+EfficientNet-B0 với số lượng tham số nhẹ (chỉ 5.3M tham số) nhưng có thể đạt hiệu quả ngang với ResNet50 (với 25.6M tham số)
+với chi phí FLOPs thấp hơn nhiều, phù hợp với giới hạn phần cứng Kaggle T4.
+
+\subsection{Khoảng trống nghiên cứu}
+
+Mặc dù ASL~\cite{ridnik2021asl} đã đạt state-of-the-art trên MS~COCO với backbone
+nặng (TResNet-L), nhưng chưa có nghiên cứu nào hệ thống hóa hiệu năng của ASL
+kết hợp CBAM trên backbone nhẹ EfficientNet-B0, đặc biệt trong điều kiện phần cứng hạn chế.
+
+% =====================================================================
+\section{Dự kiến đóng góp của nghiên cứu\\(Expected Research Contribution)}
+
+Nghiên cứu này dự kiến đóng góp vào cộng đồng khoa học ở ba phương diện:
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Kết quả thực nghiệm.}
+        Ablation study(Exp~A/B/C) với ít nhất 3 seeds độc lập cung
+        cấp bằng chứng định lượng rõ ràng về đóng góp của từng thành phần
+        (backbone, loss, attention).
+
+  \item \textbf{Luận giải cơ chế cộng hưởng CBAM--ASL.}
+        Giả thuyết trung tâm: CBAM tăng xác suất $p$ của nhãn positive ở vùng bị che khuất, giúp ASL khai thác cơ chế gradient amplification hiệu quả hơn. 
+
+  \item \textbf{Hướng dẫn thực thi.}
+        Toàn bộ code, config và hướng dẫn chạy trên Kaggle T4 sẽ được công bố
+        mã nguồn mở, hỗ trợ các nhóm nghiên cứu khác tái hiện và mở rộng
+        kết quả mà không cần đầu tư nhiều phần cứng.
+\end{enumerate}
+
+% =====================================================================
+\section{Phương pháp nghiên cứu đề xuất (Proposed Methodology)}
+
+\subsection{Kiến trúc tổng thể}
+
+Pipeline được thiết kế dạng feed-forward gồm 5 giai đoạn:
+
+\begin{equation}
+  \text{Ảnh} \;\xrightarrow{\text{Backbone}}\; F \;\xrightarrow{\text{CBAM}}\;
+  \tilde{F} \;\xrightarrow{\text{GAP}}\; \mathbf{v}
+  \;\xrightarrow{\text{FC}}\; \mathbf{z} \;\xrightarrow{\text{ASL}}\; \mathcal{L}
+  \label{eq:pipeline}
+\end{equation}
+
+\noindent trong đó $F \in \mathbb{R}^{B \times C \times H \times W}$ là feature
+map từ backbone, $\tilde{F}$ là feature map sau CBAM, $\mathbf{v} \in \mathbb{R}^{C}$
+là feature vector sau GAP, và $\mathbf{z} \in \mathbb{R}^{N_c}$ là vector logit
+với $N_c$ là số lớp.
+
+\subsection{Thiết kế Ablation Study}
+
+\begin{table}[H]
+  \caption{Ba kịch bản thực nghiệm ablation.}
+  \label{tab:ablation}
+  \centering
+  \begin{tabular}{clccc}
+    \toprule
+    \textbf{Kịch bản} & \textbf{Mô tả} & \textbf{Backbone} & \textbf{CBAM} & \textbf{Loss} \\
+    \midrule
+    Exp A & Baseline          & ResNet50        & Không & BCE \\
+    Exp B & Đóng góp của Loss       & ResNet50        & Không & ASL \\
+    Exp C & Mô hình đầy đủ   & EfficientNet-B0 & Có    & ASL \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\noindent So sánh A~$\to$~B định lượng đóng góp thuần túy của ASL.
+So sánh B~$\to$~C định lượng đóng góp của CBAM và backbone EfficientNet-B0.
+
+\subsection{Dữ liệu và tiền xử lý}
+
+\begin{itemize}[leftmargin=1.8em]
+  \item \textbf{MS~COCO 2017 subset:} 16\,000 ảnh train + 5\,000 ảnh val,
+        được lấy mẫu phân tầng (stratified sampling) đảm bảo phân bố nhãn
+        đồng đều. Nguồn: \url{https://www.kaggle.com/datasets/awsaf49/coco-2017-dataset}.
+  \item \textbf{Pascal VOC 2012:} 20 lớp, dùng để kiểm tra tính tổng quát. Nguồn: \url{https://www.kaggle.com/datasets/gopalbhattrai/pascal-voc-2012-dataset}
+  \item \textbf{Tiền xử lý:} Resize $224\times224$, RandomCrop, RandomHorizontalFlip,
+        ColorJitter, chuẩn hoá theo thống kê ImageNet.
+\end{itemize}
+
+\subsection{Siêu tham số và môi trường}
+
+\begin{table}[H]
+  \caption{Thiết lập siêu tham số thực nghiệm.}
+  \label{tab:hparam}
+  \centering
+  \begin{tabular}{lll}
+    \toprule
+    \textbf{Tham số} & \textbf{Giá trị} & \textbf{Lý do lựa chọn} \\
+    \midrule
+    Optimizer       & AdamW                        & Ổn định, phổ biến trong CV \\
+    Learning rate   & $3 \times 10^{-4}$           & Theo khuyến nghị timm \\
+    Scheduler       & OneCycleLR                   & Hội tụ nhanh trên T4 \\
+    Batch size      & 64                           & Tối đa VRAM 16\,GB \\
+    Epochs          & 20                           & Phù hợp giới hạn 30h/tuần Kaggle \\
+    $\gamma_{+}$    & 0                            & Không suy giảm gradient dương \\
+    $\gamma_{-}$    & 4                            & Triệt tiêu easy negatives \\
+    Margin $m$      & 0.05                         & Lọc mislabeled samples \\
+    Seeds           & 3 lần (42, 123, 2025)        & Đảm bảo tính thống kê \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Chỉ số đánh giá}
+
+\begin{itemize}[leftmargin=1.8em]
+  \item \textbf{mAP} (mean Average Precision): diện tích dưới đường cong
+        Precision-Recall, tính độc lập cho từng lớp rồi lấy trung bình.
+        Đây là chỉ số tiêu chuẩn cho bài toán đa nhãn.
+  \item \textbf{Macro F1-score}: tính F1 cho từng nhãn rồi lấy trung bình
+        không trọng số, đối xử công bằng giữa lớp phổ biến và lớp hiếm.
+  \item \textbf{Per-class AP analysis}: so sánh AP từng lớp giữa Exp~A và
+        Exp~C để làm rõ hiệu quả của ASL trên các lớp thiểu số.
+\end{itemize}
+
+\subsection{Hạn chế dự kiến và biện pháp xử lý}
+
+\begin{itemize}[leftmargin=1.8em]
+  \item \textit{Giới hạn phần cứng:} Chỉ dùng 20\,000 ảnh thay vì toàn bộ
+        118\,000 ảnh MS~COCO. Biện pháp: stratified sampling đảm bảo tính đại
+        diện; mixed precision training (AMP) tiết kiệm VRAM.
+  \item \textit{Xác nhận tính tổng quát:} Chỉ thử nghiệm trên 2 bộ dữ liệu.
+        Biện pháp: báo cáo rõ phạm vi áp dụng; đề xuất hướng mở rộng sang
+        NUS-WIDE hoặc Open Images cho nghiên cứu tương lai.
+  \item \textit{Ethical considerations:} Dữ liệu hoàn toàn công khai, không
+        có thông tin cá nhân nhạy cảm, không có mối lo ngại đạo đức đặc biệt.
+\end{itemize}
+
+% =====================================================================
+\section{Kế hoạch thực hiện (Work Plan)}
+
+\begin{table}[H]
+  \caption{Kế hoạch thực hiện theo tuần.}
+  \label{tab:workplan}
+  \centering
+  \small
+  \begin{tabular}{clp{7.5cm}}
+    \toprule
+    \textbf{Tuần} & \textbf{Cột mốc} & \textbf{Nội dung công việc} \\
+    \midrule
+    1  & Khảo sát \& Chuẩn bị dữ liệu   & Đọc và tổng hợp tài liệu về ASL, CBAM, EfficientNet; viết phần Background; Download MS~COCO, tạo stratified subset 20k; kiểm tra VOC 2012. \\
+    2  & Xây dựng code base & Implement \texttt{losses.py}, \texttt{cbam.py}, \texttt{models.py}, \texttt{dataset.py}. \\
+    3-4     & Exp A/B/C   & Huấn luyện ResNet50 + BCE, 3 seeds; ghi nhận mAP baseline; Huấn luyện ResNet50 + ASL, 3 seeds; so sánh với Exp~A; Huấn luyện EfficientNet-B0 + CBAM + ASL, 3 seeds. \\
+    5    & Phân tích kết quả \& Báo cáo  & Vẽ biểu đồ, per-class AP analysis, so sánh ablation table \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% =====================================================================
+\section{Tài nguyên cần thiết (Resources)}
+
+\begin{itemize}[leftmargin=1.8em]
+  \item \textbf{Phần cứng:} Kaggle Notebook với GPU NVIDIA Tesla T4 (16\,GB
+        VRAM).
+  \item \textbf{Phần mềm:} Python 3.10+, PyTorch 2.0+, timm, pycocotools,
+        scikit-learn.
+  \item \textbf{Dữ liệu:} MS~COCO 2017 và Pascal VOC 2012.
+  \item \textbf{Thời gian:} 5 tuần, song song giữa hai thành viên nhóm.
+\end{itemize}
+
+% \item \textbf{Phí hội thảo:} Phí nộp bài KSE 2025 (nếu được chấp nhận):
+        % khoảng 150--200~USD cho sinh viên -- cần xem xét hỗ trợ từ nhà trường
+        % hoặc giảng viên hướng dẫn.
+
+\noindent\textbf{Phân công công việc:}
+
+\begin{table}[H]
+  \centering
+  \small
+  \begin{tabular}{lll}
+    \toprule
+    \textbf{Thành viên} & \textbf{MSSV} & \textbf{Trách nhiệm chính} \\
+    \midrule
+    Phan Huỳnh Châu Thịnh & 23122019 & Backbone, CBAM, training loop, Exp~C, viết báo cáo \\
+    Hoàng Văn Sang & 23120350 & Loss functions, evaluation metrics, Exp~A \& B, viết báo cáo \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% =====================================================================
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

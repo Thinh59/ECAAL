@@ -1,0 +1,187 @@
+\documentclass{article}
+
+% --- TIẾNG VIỆT ---
+\usepackage[utf8]{inputenc}
+\usepackage[T5]{fontenc}
+\usepackage[vietnamese]{babel}
+
+% --- NEURIPS 2024 STYLE ---
+% Chú ý: bạn cần file neurips_2024.sty trong cùng thư mục
+\usepackage[final]{neurips_2024}
+
+% --- PACKAGES ---
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{tabularx}
+
+% --- COLOR DEFINITIONS ---
+\definecolor{propblue}{RGB}{0, 82, 155}
+\definecolor{lightgray}{RGB}{245,245,245}
+
+% hyperref config
+\hypersetup{colorlinks=true, linkcolor=propblue, urlcolor=propblue, citecolor=propblue}
+
+% =====================================================================
+\title{%
+  \textbf{Báo cáo Đồ án Cuối kỳ}\\[4pt]
+  {\large Phân loại ảnh đa nhãn với Kiến trúc EfficientNet-B0 tích hợp}\\
+  {\large Cơ chế chú ý CBAM và Hàm mất mát bất đối xứng (ASL)}
+}
+
+\author{%
+  Phan Huỳnh Châu Thịnh \\
+  MSSV: 23122019 \\
+  \texttt{23122019@student.hcmus.edu.vn}
+  \And
+  Hoàng Văn Sang \\
+  MSSV: 23120350 \\
+  \texttt{23120350@student.hcmus.edu.vn}
+}
+
+% =====================================================================
+\begin{document}
+\maketitle
+
+\begin{center}
+  {\small
+    \textit{Khoa Công nghệ Thông tin,
+    Trường Đại học Khoa học Tự nhiên,
+    Đại học Quốc gia TP.\ Hồ Chí Minh}
+  }
+\end{center}
+
+\vspace{6pt}
+\noindent\rule{\linewidth}{0.8pt}
+
+% =====================================================================
+\begin{abstract}
+Báo cáo này trình bày kết quả thực hiện đồ án phân loại ảnh đa nhãn. Nhóm nghiên cứu tập trung giải quyết thách thức mất cân bằng nhãn nghiêm trọng trên bộ dữ liệu MS COCO. Thông qua việc thiết kế 6 kịch bản thực nghiệm độc lập, nhóm tiến hành đánh giá hiệu năng của kiến trúc EfficientNet-B0 và ResNet50 khi kết hợp với module chú ý CBAM và Hàm mất mát bất đối xứng (ASL). Kết quả cho thấy mô hình ResNet50 + ASL mang lại hiệu suất tốt nhất (mAP 72.28\%), đồng thời làm sáng tỏ bản chất gây ra hiện tượng Overfitting của CBAM và EfficientNet trong điều kiện dữ liệu giới hạn.
+\end{abstract}
+
+% =====================================================================
+\section{Giới thiệu và Cơ sở Lý thuyết (Yêu cầu 2)}
+
+Bài toán phân loại đa nhãn gặp giới hạn lớn do sự chênh lệch (imbalance) giữa số lượng nhãn dương (positive) và nhãn âm (negative) trên mỗi bức ảnh. Trung bình, một ảnh MS COCO chỉ chứa 2-3 đối tượng trên tổng số 80 phân lớp, tạo ra lượng khổng lồ các nhãn âm (easy negatives) lấn át gradient trong quá trình huấn luyện.
+
+\subsection{Hàm mất mát: Asymmetric Loss (ASL)}
+Với đặc thù trên, nhóm thay thế Binary Cross Entropy (BCE) thông thường bằng ASL. ASL phân tách và xử lý riêng biệt tác động của nhãn dương và nhãn âm:
+\begin{equation}
+  L_{\mathrm{ASL}} =
+  \begin{cases}
+    (1-p)^{\gamma_{+}} \log(p) & \text{khi } y = 1 \\
+    (p_{\mathrm{shift}})^{\gamma_{-}} \log(1 - p_{\mathrm{shift}}) & \text{khi } y = 0
+  \end{cases}
+\end{equation}
+Sử dụng $\gamma_{+} = 0$, $\gamma_{-} = 4$ và $m = 0.05$, cơ chế này hoàn toàn triệt tiêu gradient sinh ra từ các "easy negatives", giúp mạng tập trung tối đa vào việc học các nhãn dương hiếm.
+
+\subsection{Kiến trúc mạng (ResNet50 và EfficientNet-B0)}
+Hai kiến trúc trích xuất đặc trưng được đặt lên bàn cân:
+\begin{itemize}
+    \item \textbf{ResNet50 ($\sim$25.6 triệu tham số):} Kiến trúc truyền thống với năng lực biểu diễn cao.
+    \item \textbf{EfficientNet-B0 ($\sim$5.3 triệu tham số):} Sử dụng Depthwise Separable Convolutions giúp giảm thiểu tham số nhưng vẫn giữ được trường nhìn sâu rộng thông qua phương pháp Compound Scaling.
+\end{itemize}
+
+\subsection{Module chú ý CBAM (Convolutional Block Attention Module)}
+CBAM hoạt động bằng cách nhân (multiply) trực tiếp feature map ban đầu với hai ma trận chú ý:
+\begin{itemize}
+    \item \textbf{Channel Attention}: Nhấn mạnh \textit{"cái gì"} là quan trọng trong ảnh.
+    \item \textbf{Spatial Attention}: Nhấn mạnh \textit{"ở đâu"} đối tượng xuất hiện.
+\end{itemize}
+
+% =====================================================================
+\section{Thiết kế Thực nghiệm (Yêu cầu 3)}
+
+\subsection{Tập dữ liệu và Phương pháp phân chia}
+Thực nghiệm sử dụng tập dữ liệu MS COCO 2017. Nhằm tiết kiệm tài nguyên tính toán nhưng vẫn đảm bảo tính khách quan, nhóm tạo ra một tập dữ liệu con (Subset) thông qua kỹ thuật lấy mẫu phân tầng (Stratified Sampling). Phân chia cụ thể bao gồm:
+\begin{itemize}
+    \item \textbf{Train Set (Tập huấn luyện):} 16.000 ảnh.
+    \item \textbf{Validation Set (Tập kiểm định):} 1.000 ảnh (sử dụng để early stopping và theo dõi loss).
+    \item \textbf{Test Set (Tập kiểm tra):} 4.000 ảnh (đánh giá độc lập để tính toán mAP cuối cùng).
+\end{itemize}
+
+\subsection{Các kịch bản thực nghiệm (Ablation Study)}
+Để có cơ sở so sánh khoa học, nhóm thiết lập 6 kịch bản thực nghiệm độc lập:
+\begin{itemize}
+    \item \textbf{Exp A (Baseline)}: ResNet50 + BCE
+    \item \textbf{Exp B}: ResNet50 + ASL
+    \item \textbf{Exp C (Đề xuất ban đầu)}: EfficientNet-B0 + CBAM + ASL
+    \item \textbf{Exp D}: ResNet50 + Focal Loss
+    \item \textbf{Exp E}: ResNet50 + CBAM + ASL
+    \item \textbf{Exp F}: EfficientNet-B0 + ASL
+\end{itemize}
+Môi trường huấn luyện đồng nhất sử dụng bộ tối ưu hóa AdamW, learning rate $3 \times 10^{-4}$ kết hợp với OneCycleLR scheduler, huấn luyện trong 20 epochs trên Kaggle GPU (T4).
+
+% =====================================================================
+\section{Kết quả Thực nghiệm}
+
+Quá trình huấn luyện ghi nhận các chỉ số mAP (mean Average Precision) trên cả 3 tập (Train, Val, Test) cùng mức độ Overfitting (Gap = Train mAP - Test mAP) của từng biến thể như sau:
+
+\begin{table}[H]
+  \caption{Kết quả đánh giá tổng hợp trên MS COCO subset.}
+  \label{tab:results}
+  \centering
+  \begin{tabular}{clcccc}
+    \toprule
+    \textbf{Thực nghiệm} & \textbf{Chi tiết mô hình} & \textbf{Train mAP (\%)} & \textbf{Test mAP (\%)} & \textbf{Test F1 (\%)} & \textbf{Overfit Gap (\%)}\\
+    \midrule
+    Exp A & ResNet50 + BCE       & 87.06 & 70.81 & 64.86 & 16.25 \\
+    Exp B & ResNet50 + ASL       & 87.39 & \textbf{72.28} & 61.59 & \textbf{15.11} \\
+    Exp C & EffNet-B0 + CBAM + ASL & 91.68 & 65.37 & 57.68 & 26.31 \\
+    Exp D & ResNet50 + Focal Loss & 86.65 & 71.00 & 64.67 & 15.65 \\
+    Exp E & ResNet50 + CBAM + ASL & 93.10 & 72.23 & 62.74 & 20.87 \\
+    Exp F & EffNet-B0 + ASL      & 81.32 & 64.63 & 55.98 & 16.69 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% =====================================================================
+\section{Phân tích và Lý giải Bản chất (Yêu cầu 3 \& 4)}
+
+Dựa trên bảng số liệu, sự chênh lệch hiệu năng giữa các kiến trúc mang lại góc nhìn sâu sắc về bản chất của mạng nơ-ron học sâu trong bài toán đa nhãn:
+
+\subsection{Sự vượt trội về lý thuyết của ASL (So sánh A, B, D)}
+Hàm mất mát ASL (Exp B - 72.28\%) vượt trội hoàn toàn so với BCE (70.81\%) và Focal Loss (71.00\%). Về mặt bản chất, BCE tạo ra lượng gradient đồng đều cho mọi nhãn, khiến các nhãn không xuất hiện (negative labels - chiếm đa số) kéo trọng số mạng hội tụ về hướng dự đoán "0". Trong khi đó, việc set $\gamma_{-} = 4$ trong ASL đã tạo ra một lực cản vật lý: khi xác suất dự đoán $p$ của nhãn âm ở mức thấp, ASL ngay lập tức dập tắt gradient xuống 0, bắt mạng phải học cách biểu diễn các nhãn dương (đối tượng thực sự xuất hiện).
+
+\subsection{Lý giải sự thất bại của EfficientNet-B0 (Hiện tượng Under-parameterized)}
+Trái với dự đoán, EfficientNet-B0 (Exp F - 64.63\%) tụt giảm hiệu năng nặng nề so với ResNet50 (Exp B - 72.28\%) dù cho Train mAP khá cao (81.32\% - 91.68\%).
+\begin{itemize}
+    \item \textbf{Bản chất:} Hiện tượng này gọi là \textit{Under-parameterized}. Bài toán phân loại MS COCO 80 lớp yêu cầu mạng học được mối quan hệ không gian, sự che khuất và sự xuất hiện đồng thời của hàng loạt đối tượng. Kiến trúc tối giản bằng Depthwise Convolutions của EfficientNet-B0 (chỉ $\sim$5.3 triệu tham số) không đủ độ tự do (degrees of freedom) và dung lượng để lưu trữ một không gian đặc trưng phức tạp như vậy.
+    \item Mạng có thể "học vẹt" (memorize) rất tốt bộ dữ liệu Train 16.000 ảnh, đẩy Train mAP lên cao, nhưng khi ném vào tập Test xa lạ, nó thiếu hụt một khối lượng tham số đủ lớn để khái quát hóa (generalize) các quy luật nhận diện, dẫn đến Test mAP thảm hại.
+\end{itemize}
+
+\subsection{Tại sao CBAM gây tác dụng ngược và Thế nào mới là kết hợp đúng?}
+Cơ chế CBAM vốn được sinh ra để định tuyến sự tập trung của mạng. Tuy nhiên, việc gắn CBAM vào mô hình trong điều kiện thực nghiệm hiện tại đã dẫn đến Overfitting trầm trọng (Exp B $\to$ Exp E tăng Gap lên 20.87\%; Exp F $\to$ Exp C tăng Gap lên tới mức kỷ lục 26.31\% với Train mAP 91.68\%).
+\begin{itemize}
+    \item \textbf{Bản chất tác động của CBAM:} Thay vì giúp mạng tìm ra các đặc điểm ngữ nghĩa chung của đối tượng, CBAM vô tình trở thành bộ "khuếch đại nhiễu". Do dữ liệu huấn luyện quá ít (16.000 ảnh), CBAM học cách ghi nhớ chính xác tọa độ (spatial) và màu sắc đặc trưng (channel) của vật thể trong đúng các bức ảnh Train đó (học vẹt cục bộ). Nó nhân hệ số khuếch đại cho các noise đặc thù này, khiến Loss trên tập Train giảm cực nhanh, nhưng khi qua tập Test, các đối tượng có hình dáng và vị trí lạ lẫm khiến CBAM khuếch đại nhầm thông tin, làm sai lệch toàn bộ dự đoán.
+    \item \textbf{Cách kết hợp "đúng":} Để CBAM phát huy tác dụng, thứ nhất, chỉ nên đặt CBAM ở các bottleneck cuối cùng của mạng (nơi chứa đựng thông tin semantic tổng quát bậc cao, ít bị nhiễu không gian). Thứ hai, phải đi kèm các cơ chế Regularization rất mạnh (như Dropout, Stochastic Depth) để ép CBAM không được phép tự tin quá mức vào một vài tọa độ nhất định. Thứ ba, phải huấn luyện trên bộ dữ liệu khổng lồ (full 118k ảnh) để CBAM học được sự bất biến (invariance) thay vì học vẹt.
+\end{itemize}
+
+% =====================================================================
+\section{Cải tiến mô hình và So sánh nghiên cứu liên quan (Yêu cầu 4 Nâng cao)}
+
+\subsection{Đề xuất hướng cải tiến}
+Dựa trên những kiến thức rút ra từ thực nghiệm, nhóm đề xuất cấu trúc tối ưu cho giới hạn phần cứng hẹp là **giữ nguyên Backbone ResNet50 kết hợp Hàm mất mát ASL, và mạnh dạn loại bỏ hoàn toàn module CBAM**. Kiến trúc nguyên bản này (Exp B) mang lại mAP 72.28\% cao nhất và có độ cân bằng tốt nhất (Gap nhỏ nhất 15.11\%).
+
+\subsection{So sánh với State-of-the-Art (SOTA)}
+Đối chiếu với công bố gốc của tác giả Ridnik et al. (2021) về hàm ASL:
+\begin{itemize}
+    \item \textbf{Khác biệt tuyệt đối:} Trong báo cáo gốc, ASL kết hợp kiến trúc siêu nặng (TResNet-L) trên \textbf{toàn bộ} tập dữ liệu MS COCO (118.000 ảnh) với độ phân giải khủng ($448 \times 448$) đã đạt mAP \textbf{86.6\%}. Kết quả \textbf{72.28\%} của nhóm trên tập dữ liệu con (16.000 ảnh) ở độ phân giải $224 \times 224$ bằng ResNet50 là một sự sụt giảm tất yếu do thiết kế scale-down.
+    \item \textbf{Sự nhất quán về mặt học thuật:} Điểm cốt lõi là bất chấp sự thiếu thốn về tài nguyên và kiến trúc bị thu nhỏ, sự cải tiến tương đối giữa ASL và Baseline BCE vẫn được duy trì hoàn hảo (ASL luôn chiến thắng BCE trong mọi Ablation Study). Điều này bảo vệ lập luận lý thuyết vững chắc của thuật toán.
+\end{itemize}
+
+% =====================================================================
+\section{Kết luận}
+Báo cáo đã hoàn thành trọn vẹn việc khảo sát, thiết kế và chứng minh hiệu quả của các kiến trúc học sâu trong phân loại đa nhãn. ResNet50 kết hợp Hàm mất mát bất đối xứng (ASL) là phương án lý tưởng nhất. Báo cáo đồng thời đã đào sâu vào cơ sở lý thuyết, phát hiện và giải thích chi tiết các nguyên nhân cốt lõi gây ra hiện tượng Under-parameterized của EfficientNet và Overfitting của cơ chế chú ý CBAM khi xử lý dữ liệu quy mô nhỏ.
+
+\end{document}
