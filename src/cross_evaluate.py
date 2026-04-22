@@ -119,7 +119,8 @@ def main():
                 'pretrained': False
             }).to(device)
             
-            state_dict = torch.load(pth_path, map_location=device, weights_only=False)
+            ckpt = torch.load(pth_path, map_location=device, weights_only=False)
+            state_dict = ckpt['model'] if isinstance(ckpt, dict) and 'model' in ckpt else ckpt
             model.load_state_dict(state_dict)
             
             metrics = evaluate_cross_dataset(model, voc_loader, device)
