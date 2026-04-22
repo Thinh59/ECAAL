@@ -85,12 +85,12 @@ def main():
         voc_ds = VOCMultiLabelDataset(args.voc_root, split='test', transform=transform)
         voc_loader = torch.utils.data.DataLoader(voc_ds, batch_size=64, num_workers=2)
     except Exception as e:
-        print(f"❌ Không thể load VOC dataset: {e}")
+        print(f"Không thể load VOC dataset: {e}")
         return
 
     output_path = Path(args.outputs_dir)
     if not output_path.exists():
-        print(f"❌ Không tìm thấy thư mục {output_path}")
+        print(f"Không tìm thấy thư mục {output_path}")
         return
 
     exp_dirs = [d for d in output_path.iterdir() if d.is_dir()]
@@ -99,10 +99,10 @@ def main():
         pth_path = exp_dir / 'best.pth'
         
         if not pth_path.exists():
-            print(f"⚠️ Skip {exp_dir.name}: Không tìm thấy best.pth")
+            print(f"Skip {exp_dir.name}: Không tìm thấy best.pth")
             continue
             
-        print(f"\n🔍 Đang đánh giá VOC cho: {exp_dir.name}")
+        print(f"\nĐang đánh giá VOC cho: {exp_dir.name}")
         try:
             backbone = 'efficientnet_b0'
             use_cbam = True
@@ -130,18 +130,18 @@ def main():
                 'VOC_Macro_F1': metrics['macro_f1'],
                 'VOC_Micro_F1': metrics['micro_f1']
             })
-            print(f"✅ {exp_dir.name}: VOC mAP = {metrics['mAP']:.4f}")
+            print(f"{exp_dir.name}: VOC mAP = {metrics['mAP']:.4f}")
             
         except Exception as e:
-            print(f"❌ Lỗi khi đánh giá {exp_dir.name}: {e}")
+            print(f"Lỗi khi đánh giá {exp_dir.name}: {e}")
             continue
 
     if results:
         df = pd.DataFrame(results)
         df.to_csv(output_path / 'voc_cross_evaluation.csv', index=False)
-        print(f"\n🎉 Đã lưu kết quả vào {output_path / 'voc_cross_evaluation.csv'}")
+        print(f"\nĐã lưu kết quả vào {output_path / 'voc_cross_evaluation.csv'}")
     else:
-        print("\n❌ Không có kết quả nào được ghi nhận.")
+        print("\nKhông có kết quả nào được ghi nhận.")
 
 if __name__ == '__main__':
     main()

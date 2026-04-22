@@ -1,7 +1,7 @@
 """
 dataset.py — COCO 2017 + Pascal VOC 2012 multi-label loaders
 
-BUG CŨ đã sửa:
+BUGCŨUUU đã sửa:
   1. Hardcode 'instances_{split}2014.json' → đổi thành 2017
   2. create_coco_subset() gọi random.shuffle mà không stratify thực sự
      → thêm stratified sampling theo số nhãn/ảnh
