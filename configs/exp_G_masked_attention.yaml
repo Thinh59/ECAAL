@@ -1,0 +1,31 @@
+# Exp G — ResNet50 + CBAM + ASL + Masked Attention Regularization
+# Mục đích: Che khuất (mask) top % điểm chú ý cao nhất do CBAM sinh ra để chống overfit
+seed: 42
+num_epochs: 20
+output_dir: /kaggle/working/outputs
+
+model:
+  backbone: resnet50
+  num_classes: 80
+  use_cbam: true
+  pretrained: true
+  dropout: 0.3
+  cbam_mask_prob: 0.2  # Mask top 20% attention pixels
+
+loss:
+  name: asl
+  gamma_pos: 0
+  gamma_neg: 4
+  clip: 0.05
+
+optimizer:
+  lr: 3.0e-4
+  weight_decay: 1.0e-4
+
+data:
+  dataset: coco
+  data_root: /kaggle/input/datasets/awsaf49/coco-2017-dataset/coco2017
+  subset_ids_path: /kaggle/working/data/coco_subset
+  batch_size: 64
+  num_workers: 2
+  img_size: 224

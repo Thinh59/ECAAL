@@ -1,0 +1,27 @@
+- v Vẽ confusion matrix để xem lớp nào bị nhập nhằng lớp nào và tiến hành xử lý
+- v Xem dữ liệu có bị mất cân bằng không (nếu bị thì giải quyết sao: bằng K-Fold, ...)
+- v Tính trên cả train và test, xem có overfit không?
+- x Giải thích tại sao train cao hơn test (trong training)
+- x Vẽ đồ thị để so sánh các tham số, biểu đồ loss qua epoch, đồ thị độ chính xác qua epoch
+- x  Có cách nào để test cao hơn train không
+- x Bỏ thử cả train + test vào training, và xem test có tăng không
+- Đọc sách: Learn from data
+- v Lấy từng mẫu trong test và chạy ra xem từng mẫu đó có khác với các mẫu trong train không, nếu khác mà model vẫn dự đoán đúng thì sao? không đúng thì sao?
+- v Đưa data vector của full tập train ra vector đặc trưng và visualize xem phần giao của nó lớn không? 
+- Lý thuyết quyết định của Bayessss: sự ko chắc chắn, làm sao kiểm soát
+- x Liệu qua những domain khác thì model có chạy được không: kết quả tốt hay xấu: Nếu tốt thì sao, xấu thì sao?
+- Có cách nào để model tự tạo kiến trúc: tự tạo mạng, kernel, huấn luyện và tự ra thay vì phải tự thiết kế bao nhiêu mạng, bao nhiêu nodes, bao nhiêu layer: Meta-learning, Neural Architecture Search (NAS)
+- Giữa số 1 và số 2 thì làm sao máy học phân biệt được số 1 và số 2?
+- Có mẫu nào đó mà cả CNN và ANN đều ra sai? Nếu có thì tại sao?
+- Có thể gộp cả hai mô hình lại với nhau (CNN + ANN) không?
+- Cách mà cái mạng vận hành: Nhận 1 ảnh input vào và nó hoạt động như thế nào? Từng component (CBAM, GAP) biến đổi như thế nào? Tính thử và vẽ thử
+
+- Chuẩn hóa: Trừ trung bình rồi mới đi huấn luyện
+
+BẢN CHẤT - LÝ GIẢI 
+- Bản chất của model hay các component chỉ là gắn thêm các ma trận chiếu W vào: và sau đó cái mà model học chính là W đó để chiếu vector về cùng ko gian = feature đặc trưng của lớp đó
+- Cái gì trong model đó chịu trách nhiệm đo sự khác biệt giữa các lớp hay là tương đồng giữa các lớp.
+-> 
+- Thận trọng trong cách viết: tự tay viết từng chữ trong bài báo cáo
+
+=> Chỉ cần phân tích chuyên sâu 1 vấn đề và tìm cách cải thiện 1 khía cạnh của vấn đề đó trong model hiện tại là được, không cần phải nâng bench cao hơn cả ResNet

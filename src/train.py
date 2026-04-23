@@ -27,7 +27,7 @@ from evaluate import evaluate_model
 from utils    import AverageMeter, Logger, save_checkpoint, set_seed
 
 
-def train_one_epoch(model, loader, optimizer, criterion, scheduler, device, scaler, max_norm=1.0):
+def train_one_epoch(model, loader, optimizer, criterion, scheduler, device, scaler, max_norm=1.0, consistency_alpha=0.0, sparsity_lambda=0.0):
     model.train()
     meter = AverageMeter()
 
@@ -41,6 +41,28 @@ def train_one_epoch(model, loader, optimizer, criterion, scheduler, device, scal
         with torch.amp.autocast('cuda'):
             logits = model(imgs)
             loss   = criterion(logits, targets)
+
+            # --- Thí nghiệm 2: Consistency Alignment ---
+            if consistency_alpha > 0.0 and getattr(model, 'use_cbam', False):
+                # Lấy attention map của ảnh gốc
+                att_orig = model.cbam.spatial_att.last_scale
+                
+                # Lật ngang ảnh, forward để lấy attention map lật
+                imgs_flipped = torch.flip(imgs, dims=[3])
+                _ = model(imgs_flipped)
+                att_flipped = model.cbam.spatial_att.last_scale
+                
+                # Lật ngược attention map lại để so với bản gốc
+                att_flipped_back = torch.flip(att_flipped, dims=[3])
+                loss_cons = torch.nn.functional.mse_loss(att_flipped_back, att_orig)
+                
+                loss = loss + consistency_alpha * loss_cons
+
+            # --- Thí nghiệm 3: Sparsity Constraints ---
+            if sparsity_lambda > 0.0 and getattr(model, 'use_cbam', False):
+                att_map = model.cbam.spatial_att.last_scale
+                loss_sparse = torch.mean(torch.abs(att_map))
+                loss = loss + sparsity_lambda * loss_sparse
 
         scaler.scale(loss).backward()
         scaler.unscale_(optimizer)
@@ -106,10 +128,14 @@ def run(config_path: str):
     logger   = Logger(str(out_dir / 'log.json'))
     best_map = 0.0
 
+    consistency_alpha = cfg.get('train', {}).get('consistency_alpha', 0.0)
+    sparsity_lambda = cfg.get('train', {}).get('sparsity_lambda', 0.0)
+
     for epoch in range(1, n_epochs + 1):
         print(f"\n--- Epoch {epoch}/{n_epochs} ---")
         train_loss = train_one_epoch(
-            model, train_loader, optimizer, criterion, scheduler, device, scaler, max_norm=max_norm
+            model, train_loader, optimizer, criterion, scheduler, device, scaler, max_norm=max_norm,
+            consistency_alpha=consistency_alpha, sparsity_lambda=sparsity_lambda
         )
 
         # Validate mỗi 2 epoch (tiết kiệm thời gian Kaggle)

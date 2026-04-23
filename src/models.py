@@ -35,6 +35,7 @@ class MultiLabelModel(nn.Module):
         use_cbam: bool = True,
         pretrained: bool = True,
         dropout_rate: float = 0.3,
+        cbam_mask_prob: float = 0.0,
     ):
         super().__init__()
         self.use_cbam = use_cbam
@@ -59,6 +60,7 @@ class MultiLabelModel(nn.Module):
                 in_channels=self.feature_channels,
                 reduction_ratio=16,
                 kernel_size=7,
+                mask_prob=cbam_mask_prob,
             )
 
         # ── GAP + Head ────────────────────────────────────────────────────────
@@ -89,8 +91,9 @@ def build_model(cfg: dict) -> MultiLabelModel:
         use_cbam=cfg.get('use_cbam', True),
         pretrained=cfg.get('pretrained', True),
         dropout_rate=cfg.get('dropout', 0.3),
+        cbam_mask_prob=cfg.get('cbam_mask_prob', 0.0),
     )
-    print(f"[Model] {cfg['backbone']} | CBAM={cfg['use_cbam']} | "
+    print(f"[Model] {cfg.get('backbone', 'efficientnet_b0')} | CBAM={cfg.get('use_cbam', True)} | "
           f"Params={model.num_parameters()/1e6:.2f}M | "
           f"FeatChannels={model.feature_channels}")
     return model
