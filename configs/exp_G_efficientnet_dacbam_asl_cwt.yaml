@@ -1,0 +1,39 @@
+seed: 42
+output_dir: outputs
+
+data:
+  dataset: coco
+  data_root: /kaggle/input/datasets/awsaf49/coco-2017-dataset/coco2017
+  batch_size: 64
+  num_workers: 4
+  img_size: 224
+  subset_ids_path: ./data/coco_subset
+
+model:
+  backbone: efficientnet_b0
+  num_classes: 80
+  use_cbam: true
+  pretrained: true
+  dropout_rate: 0.3
+  # Module Loss-aware CBAM: Áp dụng Masked Attention Regularization 
+  # để ép model chú ý vào hard regions (Difficulty-aware)
+  cbam_mask_prob: 0.3
+
+loss:
+  name: asl
+  gamma_neg: 4.0
+  gamma_pos: 1.0
+  clip: 0.05
+  eps: 1e-8
+
+optimizer:
+  lr: 0.001
+  weight_decay: 1e-4
+
+num_epochs: 25
+max_norm: 1.0
+
+train:
+  # Cấu hình Loss-aware auxiliary 
+  consistency_alpha: 0.0
+  sparsity_lambda: 0.0

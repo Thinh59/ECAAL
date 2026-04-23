@@ -33,12 +33,36 @@ def compute_map(targets: np.ndarray, probs: np.ndarray) -> dict:
 
 
 def compute_f1(targets: np.ndarray, probs: np.ndarray,
-               threshold: float = 0.5) -> dict:
-    preds = (probs >= threshold).astype(int)
-    return {
-        'macro_f1': float(f1_score(targets, preds, average='macro',  zero_division=0)),
-        'micro_f1': float(f1_score(targets, preds, average='micro',  zero_division=0)),
-    }
+               use_class_wise: bool = True) -> dict:
+    if not use_class_wise:
+        preds = (probs >= 0.5).astype(int)
+        return {
+            'macro_f1': float(f1_score(targets, preds, average='macro',  zero_division=0)),
+            'micro_f1': float(f1_score(targets, preds, average='micro',  zero_division=0)),
+        }
+    else:
+        # Tối ưu hoá ngưỡng cho từng class (Class-wise Thresholding)
+        C = targets.shape[1]
+        best_preds = np.zeros_like(probs)
+        best_thresholds = []
+        for c in range(C):
+            best_t = 0.5
+            best_f1 = 0.0
+            # Sweep ngưỡng từ 0.1 đến 0.9
+            for t in np.arange(0.1, 0.95, 0.05):
+                p = (probs[:, c] >= t).astype(int)
+                f = f1_score(targets[:, c], p, zero_division=0)
+                if f > best_f1:
+                    best_f1 = f
+                    best_t = t
+            best_thresholds.append(best_t)
+            best_preds[:, c] = (probs[:, c] >= best_t).astype(int)
+            
+        return {
+            'macro_f1': float(f1_score(targets, best_preds, average='macro',  zero_division=0)),
+            'micro_f1': float(f1_score(targets, best_preds, average='micro',  zero_division=0)),
+            'optimal_thresholds': best_thresholds
+        }
 
 
 @torch.no_grad()
