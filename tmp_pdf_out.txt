@@ -1,0 +1,143 @@
+﻿['D:\\NA\\KĂ¬ 6\\Thá»‹ GiĂ¡c MĂ¡y TĂ­nh\\Project\\ECAAL\\Report_Project_CV.pdf']
+PAGE 1:
+BĂ¡o cĂ¡o Äá»“ Ă¡n Cuá»‘i ká»³
+PhĂ¢nloáº¡iáº£nhÄ‘anhĂ£nvá»›iKiáº¿ntrĂºcEfficientNet-B0tĂ­chhá»£p
+CÆ¡cháº¿chĂºĂ½CBAMvĂ HĂ mmáº¥tmĂ¡tbáº¥tÄ‘á»‘ixá»©ng(ASL)
+PhanHuá»³nhChĂ¢uThá»‹nh HoĂ ngVÄƒnSang
+MSSV:23122019 MSSV:23120350
+23122019@student.hcmus.edu.vn 23120350@student.hcmus.edu.vn
+KhoaCĂ´ngnghá»‡ThĂ´ngtin,TrÆ°á»ngÄáº¡ihá»cKhoahá»cTá»±nhiĂªn,Äáº¡ihá»cQuá»‘cgiaTP.Há»“ChĂ­Minh
+Abstract
+BĂ¡ocĂ¡onĂ ytrĂ¬nhbĂ ykáº¿tquáº£thá»±chiá»‡nÄ‘á»“Ă¡nphĂ¢nloáº¡iáº£nhÄ‘anhĂ£n.NhĂ³mnghiĂªn
+cá»©utáº­ptrunggiáº£iquyáº¿tthĂ¡chthá»©cmáº¥tcĂ¢nbáº±ngnhĂ£nnghiĂªmtrá»ngtrĂªnbá»™dá»¯
+liá»‡uMSCOCO.ThĂ´ngquaviá»‡cthiáº¿tkáº¿6ká»‹chbáº£nthá»±cnghiá»‡mÄ‘á»™cláº­p,nhĂ³m
+tiáº¿nhĂ nhÄ‘Ă¡nhgiĂ¡hiá»‡unÄƒngcá»§akiáº¿ntrĂºcEfficientNet-B0vĂ ResNet50khikáº¿t
+há»£pvá»›imodulechĂºĂ½CBAMvĂ HĂ mmáº¥tmĂ¡tbáº¥tÄ‘á»‘ixá»©ng(ASL).Káº¿tquáº£cho
+tháº¥ymĂ´hĂ¬nhResNet50+ASLmangláº¡ihiá»‡usuáº¥ttá»‘tnháº¥t(mAP72.28%),Ä‘á»“ng
+thá»ilĂ msĂ¡ngtá»báº£ncháº¥tgĂ¢yrahiá»‡ntÆ°á»£ngOverfittingcá»§aCBAMvĂ EfficientNet
+trongÄ‘iá»ukiá»‡ndá»¯liá»‡ugiá»›iháº¡n.
+1 Giá»›ithiá»‡uvĂ CÆ¡sá»ŸLĂ½thuyáº¿t(YĂªucáº§u2)
+BĂ itoĂ¡nphĂ¢nloáº¡iÄ‘anhĂ£ngáº·pgiá»›iháº¡nlá»›ndosá»±chĂªnhlá»‡ch(imbalance)giá»¯asá»‘lÆ°á»£ngnhĂ£ndÆ°Æ¡ng
+(positive)vĂ nhĂ£nĂ¢m(negative)trĂªnmá»—ibá»©cáº£nh.TrungbĂ¬nh,má»™táº£nhMSCOCOchá»‰chá»©a2-3Ä‘á»‘i
+tÆ°á»£ngtrĂªntá»•ngsá»‘80phĂ¢nlá»›p,táº¡oralÆ°á»£ngkhá»•nglá»“cĂ¡cnhĂ£nĂ¢m(easynegatives)láº¥nĂ¡tgradient
+trongquĂ¡trĂ¬nhhuáº¥nluyá»‡n.
+1.1 HĂ mmáº¥tmĂ¡t:AsymmetricLoss(ASL)
+Vá»›iÄ‘áº·cthĂ¹trĂªn,nhĂ³mthaytháº¿BinaryCrossEntropy(BCE)thĂ´ngthÆ°á»ngbáº±ngASL.ASLphĂ¢n
+tĂ¡chvĂ xá»­lĂ½riĂªngbiá»‡ttĂ¡cÄ‘á»™ngcá»§anhĂ£ndÆ°Æ¡ngvĂ nhĂ£nĂ¢m:
+(cid:26) (1âˆ’p)Î³+log(p) khiy =1
+L = (1)
+ASL (p
+shift
+)Î³âˆ’log(1âˆ’p
+shift
+) khiy =0
+Sá»­dá»¥ngÎ³ =0,Î³ =4vĂ m=0.05,cÆ¡cháº¿nĂ yhoĂ ntoĂ ntriá»‡ttiĂªugradientsinhratá»«cĂ¡c"easy
++ âˆ’
+negatives",giĂºpmáº¡ngtáº­ptrungtá»‘iÄ‘avĂ oviá»‡chá»ccĂ¡cnhĂ£ndÆ°Æ¡nghiáº¿m.
+1.2 Kiáº¿ntrĂºcmáº¡ng(ResNet50vĂ EfficientNet-B0)
+Haikiáº¿ntrĂºctrĂ­chxuáº¥tÄ‘áº·ctrÆ°ngÄ‘Æ°á»£cÄ‘áº·tlĂªnbĂ ncĂ¢n:
+â€¢ ResNet50(âˆ¼25.6triá»‡uthamsá»‘):Kiáº¿ntrĂºctruyá»nthá»‘ngvá»›inÄƒnglá»±cbiá»ƒudiá»…ncao.
+ProjectComputerVision(2026).
+PAGE 2:
+â€¢ EfficientNet-B0(âˆ¼5.3triá»‡uthamsá»‘):Sá»­dá»¥ngDepthwiseSeparableConvolutionsgiĂºp
+giáº£m thiá»ƒu tham sá»‘ nhÆ°ng váº«n giá»¯ Ä‘Æ°á»£c trÆ°á»ng nhĂ¬n sĂ¢u rá»™ng thĂ´ng qua phÆ°Æ¡ng phĂ¡p
+CompoundScaling.
+1.3 ModulechĂºĂ½CBAM(ConvolutionalBlockAttentionModule)
+CBAMhoáº¡tÄ‘á»™ngbáº±ngcĂ¡chnhĂ¢n(multiply)trá»±ctiáº¿pfeaturemapbanÄ‘áº§uvá»›ihaimatráº­nchĂºĂ½:
+â€¢ ChannelAttention:Nháº¥nmáº¡nh"cĂ¡igĂ¬"lĂ quantrá»ngtrongáº£nh.
+â€¢ SpatialAttention:Nháº¥nmáº¡nh"á»ŸÄ‘Ă¢u"Ä‘á»‘itÆ°á»£ngxuáº¥thiá»‡n.
+2 Thiáº¿tkáº¿Thá»±cnghiá»‡m(YĂªucáº§u3)
+2.1 Táº­pdá»¯liá»‡uvĂ PhÆ°Æ¡ngphĂ¡pphĂ¢nchia
+Thá»±cnghiá»‡msá»­dá»¥ngtáº­pdá»¯liá»‡uMSCOCO2017.Nháº±mtiáº¿tkiá»‡mtĂ inguyĂªntĂ­nhtoĂ¡nnhÆ°ngváº«n
+Ä‘áº£mbáº£otĂ­nhkhĂ¡chquan,nhĂ³mtáº¡oramá»™ttáº­pdá»¯liá»‡ucon(Subset)thĂ´ngquaká»¹thuáº­tláº¥ymáº«uphĂ¢n
+táº§ng(StratifiedSampling).PhĂ¢nchiacá»¥thá»ƒbaogá»“m:
+â€¢ TrainSet(Táº­phuáº¥nluyá»‡n):16.000áº£nh.
+â€¢ ValidationSet(Táº­pkiá»ƒmÄ‘á»‹nh):1.000áº£nh(sá»­dá»¥ngÄ‘á»ƒearlystoppingvĂ theodĂµiloss).
+â€¢ TestSet(Táº­pkiá»ƒmtra):4.000áº£nh(Ä‘Ă¡nhgiĂ¡Ä‘á»™cláº­pÄ‘á»ƒtĂ­nhtoĂ¡nmAPcuá»‘icĂ¹ng).
+2.2 CĂ¡cká»‹chbáº£nthá»±cnghiá»‡m(AblationStudy)
+Äá»ƒcĂ³cÆ¡sá»ŸsosĂ¡nhkhoahá»c,nhĂ³mthiáº¿tláº­p6ká»‹chbáº£nthá»±cnghiá»‡mÄ‘á»™cláº­p:
+â€¢ ExpA(Baseline):ResNet50+BCE
+â€¢ ExpB:ResNet50+ASL
+â€¢ ExpC(Äá»xuáº¥tbanÄ‘áº§u):EfficientNet-B0+CBAM+ASL
+â€¢ ExpD:ResNet50+FocalLoss
+â€¢ ExpE:ResNet50+CBAM+ASL
+â€¢ ExpF:EfficientNet-B0+ASL
+MĂ´itrÆ°á»nghuáº¥nluyá»‡nÄ‘á»“ngnháº¥tsá»­dá»¥ngbá»™tá»‘iÆ°uhĂ³aAdamW,learningrate3Ă—10âˆ’4káº¿thá»£pvá»›i
+OneCycleLRscheduler,huáº¥nluyá»‡ntrong20epochstrĂªnKaggleGPU(T4).
+3 Káº¿tquáº£Thá»±cnghiá»‡m
+QuĂ¡trĂ¬nhhuáº¥nluyá»‡nghinháº­ncĂ¡cchá»‰sá»‘mAP(meanAveragePrecision)trĂªncáº£3táº­p(Train,Val,
+Test)cĂ¹ngmá»©cÄ‘á»™Overfitting(Gap=TrainmAP-TestmAP)cá»§atá»«ngbiáº¿nthá»ƒnhÆ°sau:
+Báº£ng1:Káº¿tquáº£Ä‘Ă¡nhgiĂ¡tá»•nghá»£ptrĂªnMSCOCOsubset.
+Thá»±cnghiá»‡m Chitiáº¿tmĂ´hĂ¬nh TrainmAP(%) TestmAP(%) TestF1(%) OverfitGap(%)
+ExpA ResNet50+BCE 87.06 70.81 64.86 16.25
+ExpB ResNet50+ASL 87.39 72.28 61.59 15.11
+ExpC EffNet-B0+CBAM+ASL 91.68 65.37 57.68 26.31
+ExpD ResNet50+FocalLoss 86.65 71.00 64.67 15.65
+ExpE ResNet50+CBAM+ASL 93.10 72.23 62.74 20.87
+ExpF EffNet-B0+ASL 81.32 64.63 55.98 16.69
+2
+PAGE 3:
+4 PhĂ¢ntĂ­chvĂ LĂ½giáº£iBáº£ncháº¥t(YĂªucáº§u3&4)
+Dá»±atrĂªnbáº£ngsá»‘liá»‡u,sá»±chĂªnhlá»‡chhiá»‡unÄƒnggiá»¯acĂ¡ckiáº¿ntrĂºcmangláº¡igĂ³cnhĂ¬nsĂ¢usáº¯cvá»báº£n
+cháº¥tcá»§amáº¡ngnÆ¡-ronhá»csĂ¢utrongbĂ itoĂ¡nÄ‘anhĂ£n:
+4.1 Sá»±vÆ°á»£ttrá»™ivá»lĂ½thuyáº¿tcá»§aASL(SosĂ¡nhA,B,D)
+HĂ m máº¥t mĂ¡t ASL (Exp B - 72.28%) vÆ°á»£t trá»™i hoĂ n toĂ n so vá»›i BCE (70.81%) vĂ  Focal Loss
+(71.00%).Vá»máº·tbáº£ncháº¥t,BCEtáº¡oralÆ°á»£nggradientÄ‘á»“ngÄ‘á»uchomá»inhĂ£n,khiáº¿ncĂ¡cnhĂ£nkhĂ´ng
+xuáº¥thiá»‡n(negativelabels-chiáº¿mÄ‘asá»‘)kĂ©otrá»ngsá»‘máº¡nghá»™itá»¥vá»hÆ°á»›ngdá»±Ä‘oĂ¡n"0".Trongkhi
+Ä‘Ă³,viá»‡csetÎ³ =4trongASLÄ‘Ă£táº¡oramá»™tlá»±ccáº£nváº­tlĂ½:khixĂ¡csuáº¥tdá»±Ä‘oĂ¡npcá»§anhĂ£nĂ¢má»Ÿ
+âˆ’
+má»©ctháº¥p,ASLngayláº­ptá»©cdáº­ptáº¯tgradientxuá»‘ng0,báº¯tmáº¡ngpháº£ihá»ccĂ¡chbiá»ƒudiá»…ncĂ¡cnhĂ£n
+dÆ°Æ¡ng(Ä‘á»‘itÆ°á»£ngthá»±csá»±xuáº¥thiá»‡n).
+4.2 LĂ½giáº£isá»±tháº¥tbáº¡icá»§aEfficientNet-B0(Hiá»‡ntÆ°á»£ngUnder-parameterized)
+TrĂ¡ivá»›idá»±Ä‘oĂ¡n,EfficientNet-B0(ExpF-64.63%)tá»¥tgiáº£mhiá»‡unÄƒngnáº·ngná»sová»›iResNet50
+(ExpB-72.28%)dĂ¹choTrainmAPkhĂ¡cao(81.32%-91.68%).
+â€¢ Báº£ncháº¥t:Hiá»‡ntÆ°á»£ngnĂ ygá»ilĂ Under-parameterized.BĂ itoĂ¡nphĂ¢nloáº¡iMSCOCO80lá»›p
+yĂªucáº§umáº¡nghá»cÄ‘Æ°á»£cmá»‘iquanhá»‡khĂ´nggian,sá»±chekhuáº¥tvĂ sá»±xuáº¥thiá»‡nÄ‘á»“ngthá»icá»§a
+hĂ ngloáº¡tÄ‘á»‘itÆ°á»£ng.Kiáº¿ntrĂºctá»‘igiáº£nbáº±ngDepthwiseConvolutionscá»§aEfficientNet-B0
+(chá»‰âˆ¼5.3triá»‡uthamsá»‘)khĂ´ngÄ‘á»§Ä‘á»™tá»±do(degreesoffreedom)vĂ dunglÆ°á»£ngÄ‘á»ƒlÆ°utrá»¯
+má»™tkhĂ´nggianÄ‘áº·ctrÆ°ngphá»©ctáº¡pnhÆ°váº­y.
+â€¢ Máº¡ngcĂ³thá»ƒ"há»cváº¹t"(memorize)ráº¥ttá»‘tbá»™dá»¯liá»‡uTrain16.000áº£nh,Ä‘áº©yTrainmAPlĂªn
+cao,nhÆ°ngkhinĂ©mvĂ otáº­pTestxaláº¡,nĂ³thiáº¿uhá»¥tmá»™tkhá»‘ilÆ°á»£ngthamsá»‘Ä‘á»§lá»›nÄ‘á»ƒkhĂ¡i
+quĂ¡thĂ³a(generalize)cĂ¡cquyluáº­tnháº­ndiá»‡n,dáº«nÄ‘áº¿nTestmAPtháº£mháº¡i.
+4.3 Táº¡isaoCBAMgĂ¢ytĂ¡cdá»¥ngngÆ°á»£cvĂ Tháº¿nĂ omá»›ilĂ káº¿thá»£pÄ‘Ăºng?
+CÆ¡cháº¿CBAMvá»‘nÄ‘Æ°á»£csinhraÄ‘á»ƒÄ‘á»‹nhtuyáº¿nsá»±táº­ptrungcá»§amáº¡ng.TuynhiĂªn,viá»‡cgáº¯nCBAM
+vĂ omĂ´hĂ¬nhtrongÄ‘iá»ukiá»‡nthá»±cnghiá»‡mhiá»‡ntáº¡iÄ‘Ă£dáº«nÄ‘áº¿nOverfittingtráº§mtrá»ng(ExpBâ†’ExpE
+tÄƒngGaplĂªn20.87%;ExpFâ†’ExpCtÄƒngGaplĂªntá»›imá»©cká»·lá»¥c26.31%vá»›iTrainmAP91.68%).
+â€¢ Báº£ncháº¥ttĂ¡cÄ‘á»™ngcá»§aCBAM:ThayvĂ¬giĂºpmáº¡ngtĂ¬mracĂ¡cÄ‘áº·cÄ‘iá»ƒmngá»¯nghÄ©achung
+cá»§aÄ‘á»‘itÆ°á»£ng,CBAMvĂ´tĂ¬nhtrá»ŸthĂ nhbá»™"khuáº¿chÄ‘áº¡inhiá»…u".Dodá»¯liá»‡uhuáº¥nluyá»‡nquĂ¡
+Ă­t(16.000áº£nh),CBAMhá»ccĂ¡chghinhá»›chĂ­nhxĂ¡ctá»aÄ‘á»™(spatial)vĂ mĂ usáº¯cÄ‘áº·ctrÆ°ng
+(channel) cá»§a váº­t thá»ƒ trong Ä‘Ăºng cĂ¡c bá»©c áº£nh Train Ä‘Ă³ (há»c váº¹t cá»¥c bá»™). NĂ³ nhĂ¢n há»‡ sá»‘
+khuáº¿chÄ‘áº¡ichocĂ¡cnoiseÄ‘áº·cthĂ¹nĂ y,khiáº¿nLosstrĂªntáº­pTraingiáº£mcá»±cnhanh,nhÆ°ngkhi
+quatáº­pTest,cĂ¡cÄ‘á»‘itÆ°á»£ngcĂ³hĂ¬nhdĂ¡ngvĂ vá»‹trĂ­láº¡láº«mkhiáº¿nCBAMkhuáº¿chÄ‘áº¡inháº§m
+thĂ´ngtin,lĂ msailá»‡chtoĂ nbá»™dá»±Ä‘oĂ¡n.
+â€¢ CĂ¡chkáº¿thá»£p"Ä‘Ăºng":Äá»ƒCBAMphĂ¡thuytĂ¡cdá»¥ng,thá»©nháº¥t,chá»‰nĂªnÄ‘áº·tCBAMá»ŸcĂ¡c
+bottleneckcuá»‘icĂ¹ngcá»§amáº¡ng(nÆ¡ichá»©aÄ‘á»±ngthĂ´ngtinsemantictá»•ngquĂ¡tbáº­ccao,Ă­tbá»‹
+nhiá»…ukhĂ´nggian).Thá»©hai,pháº£iÄ‘ikĂ¨mcĂ¡ccÆ¡cháº¿Regularizationráº¥tmáº¡nh(nhÆ°Dropout,
+StochasticDepth)Ä‘á»ƒĂ©pCBAMkhĂ´ngÄ‘Æ°á»£cphĂ©ptá»±tinquĂ¡má»©cvĂ omá»™tvĂ itá»aÄ‘á»™nháº¥t
+Ä‘á»‹nh.Thá»©ba,pháº£ihuáº¥nluyá»‡ntrĂªnbá»™dá»¯liá»‡ukhá»•nglá»“(full118káº£nh)Ä‘á»ƒCBAMhá»cÄ‘Æ°á»£c
+sá»±báº¥tbiáº¿n(invariance)thayvĂ¬há»cváº¹t.
+5 Cáº£itiáº¿nmĂ´hĂ¬nhvĂ SosĂ¡nhnghiĂªncá»©uliĂªnquan(YĂªucáº§u4NĂ¢ngcao)
+5.1 Äá»xuáº¥thÆ°á»›ngcáº£itiáº¿n
+Dá»±atrĂªnnhá»¯ngkiáº¿nthá»©crĂºtratá»«thá»±cnghiá»‡m,nhĂ³mÄ‘á»xuáº¥tcáº¥utrĂºctá»‘iÆ°uchogiá»›iháº¡npháº§ncá»©ng
+háº¹plĂ **giá»¯nguyĂªnBackboneResNet50káº¿thá»£pHĂ mmáº¥tmĂ¡tASL,vĂ máº¡nhdáº¡nloáº¡ibá»hoĂ ntoĂ n
+moduleCBAM**.Kiáº¿ntrĂºcnguyĂªnbáº£nnĂ y(ExpB)mangláº¡imAP72.28%caonháº¥tvĂ cĂ³Ä‘á»™cĂ¢n
+báº±ngtá»‘tnháº¥t(Gapnhá»nháº¥t15.11%).
+3
+PAGE 4:
+5.2 SosĂ¡nhvá»›iState-of-the-Art(SOTA)
+Äá»‘ichiáº¿uvá»›icĂ´ngbá»‘gá»‘ccá»§atĂ¡cgiáº£Ridniketal.(2021)vá»hĂ mASL:
+â€¢ KhĂ¡cbiá»‡ttuyá»‡tÄ‘á»‘i:TrongbĂ¡ocĂ¡ogá»‘c,ASLkáº¿thá»£pkiáº¿ntrĂºcsiĂªunáº·ng(TResNet-L)trĂªn
+toĂ nbá»™táº­pdá»¯liá»‡uMSCOCO(118.000áº£nh)vá»›iÄ‘á»™phĂ¢ngiáº£ikhá»§ng(448Ă—448)Ä‘Ă£Ä‘áº¡t
+mAP86.6%.Káº¿tquáº£72.28%cá»§anhĂ³mtrĂªntáº­pdá»¯liá»‡ucon(16.000áº£nh)á»ŸÄ‘á»™phĂ¢ngiáº£i
+224Ă—224báº±ngResNet50lĂ má»™tsá»±sá»¥tgiáº£mtáº¥tyáº¿udothiáº¿tkáº¿scale-down.
+â€¢ Sá»±nháº¥tquĂ¡nvá»máº·thá»cthuáº­t:Äiá»ƒmcá»‘tlĂµilĂ báº¥tcháº¥psá»±thiáº¿uthá»‘nvá»tĂ inguyĂªnvĂ 
+kiáº¿ntrĂºcbá»‹thunhá»,sá»±cáº£itiáº¿ntÆ°Æ¡ngÄ‘á»‘igiá»¯aASLvĂ BaselineBCEváº«nÄ‘Æ°á»£cduytrĂ¬hoĂ n
+háº£o(ASLluĂ´nchiáº¿ntháº¯ngBCEtrongmá»iAblationStudy).Äiá»unĂ ybáº£ová»‡láº­pluáº­nlĂ½
+thuyáº¿tvá»¯ngcháº¯ccá»§athuáº­ttoĂ¡n.
+6 Káº¿tluáº­n
+BĂ¡ocĂ¡oÄ‘Ă£hoĂ nthĂ nhtrá»nváº¹nviá»‡ckháº£osĂ¡t,thiáº¿tkáº¿vĂ chá»©ngminhhiá»‡uquáº£cá»§acĂ¡ckiáº¿ntrĂºc
+há»csĂ¢utrongphĂ¢nloáº¡iÄ‘anhĂ£n.ResNet50káº¿thá»£pHĂ mmáº¥tmĂ¡tbáº¥tÄ‘á»‘ixá»©ng(ASL)lĂ phÆ°Æ¡ngĂ¡n
+lĂ½tÆ°á»Ÿngnháº¥t.BĂ¡ocĂ¡oÄ‘á»“ngthá»iÄ‘Ă£Ä‘Ă osĂ¢uvĂ ocÆ¡sá»ŸlĂ½thuyáº¿t,phĂ¡thiá»‡nvĂ giáº£ithĂ­chchitiáº¿tcĂ¡c
+nguyĂªnnhĂ¢ncá»‘tlĂµigĂ¢yrahiá»‡ntÆ°á»£ngUnder-parameterizedcá»§aEfficientNetvĂ Overfittingcá»§acÆ¡
+cháº¿chĂºĂ½CBAMkhixá»­lĂ½dá»¯liá»‡uquymĂ´nhá».
+4

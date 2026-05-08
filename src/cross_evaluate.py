@@ -51,15 +51,18 @@ def get_coco_to_voc_mapping():
 def evaluate_cross_dataset(model, loader, device='cuda'):
     model.eval()
     mapping = get_coco_to_voc_mapping()
+    print(f"DEBUG: Mapping size: {len(mapping)} (Expected: 20)")
     all_probs, all_targets = [], []
     
     for imgs, targets in tqdm(loader, desc="Evaluating VOC", leave=False):
         logits = model(imgs.to(device))
         probs = torch.sigmoid(logits).cpu().numpy()
         
+        # Ensure dimensions match and map correctly
         voc_probs = np.zeros((probs.shape[0], 20))
         for voc_idx, coco_idx in mapping.items():
-            voc_probs[:, voc_idx] = probs[:, coco_idx]
+            if coco_idx < probs.shape[1]:
+                voc_probs[:, voc_idx] = probs[:, coco_idx]
             
         all_probs.append(voc_probs)
         all_targets.append(targets.numpy())
@@ -111,6 +114,9 @@ def main():
                 use_cbam = 'cbam' in exp_dir.name.lower()
             elif 'efficientnet_asl' in exp_dir.name.lower():
                 use_cbam = False
+            elif 'exp_g' in exp_dir.name.lower():
+                backbone = 'efficientnet_b0'
+                use_cbam = True
             
             model = build_model({
                 'backbone': backbone,

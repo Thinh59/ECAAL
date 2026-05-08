@@ -1,0 +1,385 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T5]{fontenc}
+\usepackage[vietnamese]{babel}
+\usepackage[final]{neurips_2024}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{multirow}
+
+\definecolor{propblue}{RGB}{0, 82, 155}
+\hypersetup{colorlinks=true, linkcolor=propblue, urlcolor=propblue, citecolor=propblue}
+
+\title{%
+  \textbf{Báo cáo Thực nghiệm --- Yêu cầu 2 \& 3}\\[4pt]
+  {\large Đề xuất và Đánh giá Mô hình EfficientNet-B0 + CBAM + ASL}\\
+  {\large cho Bài toán Phân loại Ảnh Đa nhãn trên MS COCO}
+}
+
+\author{%
+  Phan Huỳnh Châu Thịnh \quad MSSV: 23122019\\
+  Hoàng Văn Sang \quad MSSV: 23120350\\
+  \texttt{\{23122019, 23120350\}@student.hcmus.edu.vn}
+}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+  {\small\textit{Khoa Công nghệ Thông tin, Trường ĐHKH Tự nhiên, ĐHQG TP.HCM}}
+\end{center}
+\vspace{4pt}\noindent\rule{\linewidth}{0.8pt}
+
+%% ===================================================================
+\begin{abstract}
+Báo cáo này trình bày \textbf{Yêu cầu 2} (đề xuất mô hình) và \textbf{Yêu cầu 3}
+(thực nghiệm, phân tích, đánh giá) cho bài toán phân loại ảnh đa nhãn.
+Chúng tôi đề xuất kiến trúc kết hợp \textbf{EfficientNet-B0} làm backbone,
+\textbf{CBAM} làm neck tinh chỉnh đặc trưng, và \textbf{Asymmetric Loss (ASL)}
+xử lý mất cân bằng nhãn (mô hình Exp~C).
+Trên tập MS~COCO subset ($16{,}000$ ảnh train / $1{,}000$ val / $3{,}952$ test),
+Exp~C đạt Val~mAP \textbf{0.6364} (best epoch~8), Test~mAP \textbf{0.6537}.
+Overfitting gap (Train~mAP $0.9168$ $-$ Test~mAP $0.6537$ $= 0.263$) là thách thức
+cần giải quyết, dẫn đến đề xuất cải tiến Exp~G (Yêu cầu~4).
+\end{abstract}
+
+%% ===================================================================
+\section{Yêu cầu 2 --- Đề xuất Mô hình}
+
+\subsection{Phân tích bài toán và động cơ đề xuất}
+
+Bài toán phân loại ảnh đa nhãn yêu cầu mô hình dự đoán đồng thời nhiều nhãn
+cho một ảnh đầu vào. Trên MS~COCO (80 lớp), mỗi ảnh trung bình chỉ chứa
+$2$--$3$ nhãn dương tính, tức tỉ lệ positive/negative cực thấp ($\approx 1{:}37$).
+Hai vấn đề cốt lõi cần giải quyết:
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Mất cân bằng nhãn nghiêm trọng:} Binary Cross-Entropy (BCE) truyền
+        thống không phân biệt gradient từ easy negatives và hard positives,
+        dẫn đến mô hình thiên lệch về phía âm tính.
+  \item \textbf{Đặc trưng không gian chưa được khai thác:} Trong ảnh đa nhãn,
+        mỗi nhãn thường gắn với một vùng không gian cụ thể; backbone thông thường
+        không có cơ chế định vị vùng này trước khi tổng hợp đặc trưng.
+\end{enumerate}
+
+\subsection{Kiến trúc đề xuất (Exp~C)}
+
+Chúng tôi đề xuất kiến trúc feed-forward gồm 5 giai đoạn:
+
+\begin{equation}
+  \text{Ảnh} \;\xrightarrow{\text{EfficientNet-B0}}\; F
+  \;\xrightarrow{\text{CBAM}}\; \tilde{F}
+  \;\xrightarrow{\text{GAP}}\; \mathbf{v}
+  \;\xrightarrow{\text{FC}+\text{Dropout}}\; \mathbf{z}
+  \;\xrightarrow{\text{ASL}}\; \mathcal{L}
+\end{equation}
+
+\noindent Trong đó $F \in \mathbb{R}^{B \times 1280 \times 7 \times 7}$
+là feature map từ backbone, $\tilde{F}$ là feature map sau CBAM,
+$\mathbf{v} \in \mathbb{R}^{1280}$ là vector đặc trưng sau GAP,
+$\mathbf{z} \in \mathbb{R}^{80}$ là vector logit trước sigmoid.
+
+\paragraph{Backbone --- EfficientNet-B0.}
+EfficientNet-B0~\cite{tan2019efficientnet} sử dụng compound scaling để cân bằng
+đồng thời chiều sâu, chiều rộng, và độ phân giải. Với chỉ $3.63\text{M}$ tham số
+(so với $23.67\text{M}$ của ResNet50), EfficientNet-B0 nhẹ hơn $6.5\times$,
+phù hợp với giới hạn phần cứng Kaggle~T4 (16\,GB VRAM).
+
+\paragraph{Neck --- CBAM.}
+CBAM (Convolutional Block Attention Module)~\cite{woo2018cbam} áp dụng
+tuần tự hai cơ chế chú ý:
+
+\begin{itemize}[leftmargin=1.8em]
+  \item \textbf{Channel Attention} học trọng số $\mathbf{s}_c \in (0,1)^C$
+        để nhấn mạnh kênh đặc trưng nào quan trọng (``what''):
+        \[
+          \mathbf{s}_c = \sigma\!\bigl(\text{MLP}(\text{AvgPool}(F))
+          + \text{MLP}(\text{MaxPool}(F))\bigr)
+        \]
+  \item \textbf{Spatial Attention} tạo bản đồ chú ý $\mathbf{M}_s \in (0,1)^{H\times W}$
+        để định vị vùng nào trong ảnh đáng chú ý (``where''):
+        \[
+          \mathbf{M}_s = \sigma\!\bigl(\text{Conv}_{7\times7}(
+          [\text{AvgPool}_c(F'),\, \text{MaxPool}_c(F')])\bigr)
+        \]
+\end{itemize}
+
+\paragraph{Loss --- Asymmetric Loss (ASL).}
+ASL~\cite{ridnik2021asl} xử lý riêng nhãn dương ($y=1$) và âm ($y=0$)
+với hệ số focusing khác nhau $\gamma_+ < \gamma_-$:
+\begin{equation}
+  L_{\text{ASL}} = \begin{cases}
+    (1-p)^{\gamma_+}\log p & y=1 \\
+    (p_{\text{shift}})^{\gamma_-}\log(1-p_{\text{shift}}) & y=0
+  \end{cases}
+\end{equation}
+Với $p_{\text{shift}} = \max(p-m, 0)$, $m=0.05$, $\gamma_+=0$, $\gamma_-=4$.
+Cơ chế này triệt tiêu hoàn toàn gradient của easy negatives ($p < m$),
+giải quyết triệt để vấn đề mất cân bằng nhãn.
+
+\subsection{Bản chất toán học: Mô hình là chuỗi các phép chiếu W}
+
+\textbf{Nhìn từ góc độ đại số tuyến tính,} toàn bộ pipeline có thể hiểu là
+chuỗi các phép biến đổi vector đặc trưng:
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Backbone} học các ma trận tích chập $\mathbf{W}_\ell^{\text{conv}}$
+        tại mỗi layer $\ell$, biến đổi ảnh thô thành feature map $F$ ở không gian
+        đặc trưng ngữ nghĩa cao.
+  \item \textbf{CBAM Channel} học ma trận MLP $\mathbf{W}_{\text{ch}}$ chiếu
+        vector kênh về không gian trọng số để chọn lọc kênh quan trọng.
+  \item \textbf{CBAM Spatial} học kernel conv $\mathbf{W}_{\text{sp}} \in \mathbb{R}^{1\times2\times7\times7}$
+        để gắn trọng số không gian, định vị đối tượng.
+  \item \textbf{FC Head} học ma trận $\mathbf{W}_{\text{fc}} \in \mathbb{R}^{80 \times 1280}$
+        chiếu vector đặc trưng $\mathbf{v}$ về không gian nhãn: logit thứ $i$ =
+        $\mathbf{w}_i^\top \mathbf{v}$ đo mức độ tương đồng giữa $\mathbf{v}$
+        và prototype của lớp $i$.
+\end{enumerate}
+
+\noindent Sự phân biệt giữa các lớp được đảm nhiệm bởi \textbf{ma trận FC}:
+hàng $i$ của $\mathbf{W}_{\text{fc}}$ là ``prototype vector'' của lớp $i$ trong
+không gian đặc trưng. Mô hình phân loại đúng khi các prototype đủ xa nhau,
+được tối ưu bởi ASL thông qua gradient amplification trên hard samples.
+
+%% ===================================================================
+\section{Yêu cầu 3 --- Thực nghiệm, Phân tích và Đánh giá}
+
+\subsection{Thiết lập thực nghiệm}
+
+\begin{table}[H]
+  \caption{Các kịch bản ablation study (6 experiments).}
+  \label{tab:ablation_setup}
+  \centering
+  \begin{tabular}{clccc}
+    \toprule
+    \textbf{Exp} & \textbf{Mô tả} & \textbf{Backbone} & \textbf{CBAM} & \textbf{Loss} \\
+    \midrule
+    A & Baseline              & ResNet50        & Không & BCE   \\
+    B & ASL thay BCE          & ResNet50        & Không & ASL   \\
+    C & \textbf{Mô hình đề xuất} & EfficientNet-B0 & Có & ASL   \\
+    D & Focal Loss            & ResNet50        & Không & Focal \\
+    E & ResNet + CBAM + ASL   & ResNet50        & Có    & ASL   \\
+    F & EfficientNet + ASL    & EfficientNet-B0 & Không & ASL   \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\noindent \textbf{Dữ liệu:} MS~COCO 2017 subset stratified:
+$16{,}000$ ảnh train / $1{,}000$ val / $3{,}952$ test.\\
+\textbf{Tiền xử lý:} resize $224\times224$, RandomHorizontalFlip,
+ColorJitter, chuẩn hóa ImageNet ($\mu$=\{0.485,0.456,0.406\},
+$\sigma$=\{0.229,0.224,0.225\}).\\
+\textbf{Môi trường:} Kaggle Notebook, GPU NVIDIA Tesla T4 (16\,GB VRAM).\\
+\textbf{Siêu tham số:} AdamW, lr=$3\times10^{-4}$, OneCycleLR,
+batch=64, epochs=20, dropout=0.3.
+
+\subsection{Kết quả định lượng (số liệu thực nghiệm)}
+
+\begin{table}[H]
+  \caption{Kết quả toàn diện: Val~mAP (best epoch), Train~mAP, Test~mAP,
+           Overfitting Gap (Train $-$ Test), và các chỉ số F1.}
+  \label{tab:full_results}
+  \centering
+  \small
+  \begin{tabular}{lccccccc}
+    \toprule
+    \textbf{Exp} & \textbf{Val mAP} & \textbf{Train mAP}
+      & \textbf{Test mAP} & \textbf{Gap} & \textbf{Val F1} & \textbf{Test F1} \\
+    \midrule
+    A: ResNet50+BCE      & 0.6908 & 0.8706 & 0.7081 & 0.1625 & 0.6201 & 0.6486 \\
+    B: ResNet50+ASL      & 0.7107 & 0.8739 & 0.7228 & 0.1511 & 0.5886 & 0.6159 \\
+    D: ResNet50+Focal    & 0.7009 & 0.8665 & 0.7100 & 0.1565 & 0.6286 & 0.6467 \\
+    E: ResNet50+CBAM+ASL & 0.7129 & 0.9310 & 0.7223 & 0.2087 & 0.6167 & 0.6274 \\
+    F: EffNet+ASL        & 0.6326 & 0.8132 & 0.6463 & 0.1669 & 0.5460 & 0.5598 \\
+    \textbf{C: EffNet+CBAM+ASL} & \textbf{0.6364} & \textbf{0.9168} & \textbf{0.6537} & \textbf{0.2631} & \textbf{0.5651} & \textbf{0.5768} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\noindent \textit{Ghi chú:} Train~mAP được tính bằng cách chạy evaluate trên
+toàn bộ tập train ($16{,}000$ ảnh) với checkpoint best.pth.
+Val~mAP được ghi lại từ log.json (best epoch trong quá trình training).
+
+\subsection{Phân tích: Tại sao không đạt 100\%?}
+
+\subsubsection{Mất cân bằng nhãn nghiêm trọng}
+
+Trên MS~COCO subset ($16{,}000$ ảnh, 80 lớp):
+\begin{itemize}[leftmargin=1.8em]
+  \item Lớp phổ biến nhất (\textit{person}): $\approx 7{,}000$ positive samples.
+  \item Lớp hiếm nhất (\textit{hair drier}): $< 150$ positive samples.
+  \item Tỉ lệ positive trung bình: $\sim 2.7\%$ mỗi lớp ($\approx 37{:}1$).
+\end{itemize}
+Dù ASL xử lý tốt hơn BCE, các lớp hiếm gặp vẫn đạt AP rất thấp
+(ví dụ: \textit{hair drier} AP $< 0.12$).
+
+\subsubsection{Giới hạn dữ liệu và backbone}
+
+Chỉ dùng $16{,}000$ ảnh (thay vì $118{,}000$ ảnh toàn bộ COCO), độ bao phủ
+phân phối thực tế không đầy đủ. EfficientNet-B0 với $3.63\text{M}$ tham số
+có thể bị \textit{under-parameterized} cho tác vụ 80 lớp phức tạp
+(so với ResNet50 với $23.67\text{M}$ tham số đạt Test~mAP~$0.7228$).
+
+\subsubsection{Nhập nhằng giữa các lớp (Class Confusion)}
+
+Nhiều nhãn đồng xuất hiện thường xuyên (\textit{person + bicycle, chair + dining table}),
+khiến mô hình khó phân biệt boundary quyết định.
+Threshold cố định $\theta = 0.5$ không tối ưu cho mọi lớp ---
+đây là lý do chính dẫn đến Macro-F1 thấp trong Exp~C.
+
+\subsection{Train cao hơn Test: Hiện tượng Overfitting}
+
+\begin{table}[H]
+  \caption{Phân tích overfitting gap.}
+  \centering
+  \small
+  \begin{tabular}{lcc}
+    \toprule
+    \textbf{Exp} & \textbf{Gap (Train$-$Test)} & \textbf{Nhận xét} \\
+    \midrule
+    B: ResNet50+ASL      & 0.1511 & Overfitting nhẹ \\
+    A: ResNet50+BCE      & 0.1625 & Overfitting nhẹ \\
+    D: ResNet50+Focal    & 0.1565 & Overfitting nhẹ \\
+    F: EffNet+ASL        & 0.1669 & Overfitting nhẹ \\
+    E: ResNet50+CBAM+ASL & 0.2087 & Overfitting trung bình \\
+    C: EffNet+CBAM+ASL   & 0.2631 & \textbf{Overfitting nặng} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\textbf{Lý giải tại sao Train~mAP $>$ Test~mAP:}
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Distribution shift:} Mô hình ghi nhớ đặc trưng cụ thể của
+        $16{,}000$ ảnh train, không generalize hoàn toàn sang tập test.
+  \item \textbf{CBAM ``học nhiễu'':} Với dataset nhỏ, CBAM có thể học các
+        attention map đặc thù với train set (texture/color bias) thay vì
+        học đặc trưng tổng quát --- đây là lý do Exp~C có gap lớn nhất
+        ($0.2631$) dù backbone nhẹ hơn.
+  \item \textbf{Capacity mismatch:} Exp~E (ResNet50+CBAM) có gap $0.2087$,
+        cho thấy CBAM kết hợp backbone lớn cũng dễ overfit hơn khi không
+        có thêm regularization.
+  \item \textbf{Threshold \& metric:} Train~mAP được tính với threshold tối ưu
+        tìm trên train set, trong khi Test dùng threshold cố định $0.5$.
+\end{enumerate}
+
+\subsection{Phân tích per-class AP --- Lớp nào khó nhất?}
+
+\begin{table}[H]
+  \caption{10 lớp có AP thấp nhất (Exp~C, Val set) và nguyên nhân.}
+  \label{tab:perclass}
+  \centering
+  \small
+  \begin{tabular}{lcp{5cm}}
+    \toprule
+    \textbf{Lớp} & \textbf{AP} & \textbf{Nguyên nhân} \\
+    \midrule
+    hair drier   & $<0.12$ & Rất hiếm ($<150$ mẫu), thường bị che khuất \\
+    toothbrush   & $<0.15$ & Nhỏ trong ảnh, nhiều màu sắc khác nhau \\
+    parking meter& $<0.20$ & Nền đô thị gây nhiễu, hình dạng dài-mảnh \\
+    scissors     & $<0.20$ & Nhỏ, nhiều tư thế, co-occurs với bàn \\
+    snowboard    & $<0.30$ & Co-occurs với \textit{person}, bối cảnh tuyết trắng \\
+    cell phone   & $<0.40$ & Bị che tay, góc chụp đa dạng \\
+    mouse        & $<0.45$ & Nhỏ, phụ thuộc context bàn làm việc \\
+    skis         & $<0.45$ & Co-occurs với \textit{snowboard}, tuyết trắng \\
+    remote       & $<0.47$ & Nhỏ, hình dạng đơn giản, dễ nhầm \\
+    tie          & $<0.47$ & Bị che bởi quần áo, phụ thuộc \textit{person} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\noindent \textbf{Nhận xét quan trọng:} Spatial Attention ($7\times7$)
+của CBAM không đủ độ phân giải để định vị vật thể rất nhỏ
+(hair drier, toothbrush, scissors). Đây là hạn chế cấu trúc cần cải tiến.
+
+\subsection{Phân tích 10 mẫu test tiêu biểu --- Trường hợp sai}
+
+Phân tích định tính trên các mẫu test có lỗi cao nhất (FP+FN nhiều nhất):
+
+\begin{table}[H]
+  \caption{Phân loại các trường hợp dự đoán sai điển hình của Exp~C.}
+  \label{tab:error}
+  \centering
+  \small
+  \begin{tabular}{p{2.5cm}p{3cm}p{4cm}p{3.5cm}}
+    \toprule
+    \textbf{Loại lỗi} & \textbf{Ví dụ} & \textbf{Nguyên nhân} & \textbf{Hướng cải tiến}\\
+    \midrule
+    False Negative (FN) &
+      \textit{hair drier} trong ảnh nhưng bỏ sót &
+      $<150$ mẫu train, vật nhỏ, bị che &
+      Oversample, focal loss mạnh hơn \\
+    False Positive (FP) &
+      Predict \textit{tie} khi không có &
+      Co-occurrence cao với \textit{person} trong train &
+      Debiasing, negative sampling \\
+    Nhầm lớp tương đồng &
+      Nhầm \textit{skis} $\leftrightarrow$ \textit{snowboard} &
+      Hai lớp cùng bối cảnh, hình dạng gần nhau &
+      Contrastive loss \\
+    Mẫu ngoài phân phối &
+      Ảnh ban đêm, góc cực đoan &
+      Train chủ yếu trên ảnh ban ngày &
+      Data augmentation đa dạng hơn \\
+    \midrule
+    \multicolumn{4}{l}{\textit{Nhận xét:} Threshold $0.5$ cố định gây FP cho lớp
+    co-occurs cao (\textit{person+tie})} \\
+    \multicolumn{4}{l}{\textit{và FN cho lớp hiếm (\textit{hair drier}).
+    $\Rightarrow$ Động cơ cho Adaptive Threshold (Exp~G).}} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Phân tích đường cong training}
+
+\paragraph{Exp~A (ResNet50+BCE):}
+Train loss giảm đều từ $\approx0.114$ (epoch~2) xuống $0.034$ (epoch~20, hội tụ).
+Val mAP tăng từ $0.422$ lên $0.691$. Hội tụ rõ từ epoch~10.
+
+\paragraph{Exp~C (EfficientNet+CBAM+ASL):}
+Train loss khởi đầu cao ($\approx 1.12$, epoch~2) do ASL scale khác BCE,
+giảm dần xuống $0.943$ (epoch~8 --- best val mAP). Val mAP tăng từ $0.557$
+(epoch~2) lên $0.636$ (epoch~8), sau đó dao động và không tăng thêm nhiều.
+\textbf{Nguyên nhân plateau:} EfficientNet-B0 với $3.63\text{M}$ tham số
+đã học hết thông tin có thể trích xuất từ $16{,}000$ ảnh train.
+
+\paragraph{Exp~B (ResNet50+ASL) --- Baseline tốt nhất:}
+Đạt Val~mAP $0.7107$ (epoch~8), Train~mAP $0.8739$, Test~mAP $0.7228$.
+ResNet50 với $23.67\text{M}$ tham số có đủ capacity cho tác vụ 80 lớp,
+và ASL giải quyết tốt mất cân bằng nhãn mà không cần CBAM.
+
+\subsection{Nhận xét tổng kết (Yêu cầu 3)}
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Về mAP:} Exp~B (ResNet50+ASL) dẫn đầu với Test~mAP $0.7228$.
+        Exp~C (mô hình đề xuất) đạt $0.6537$ --- thấp hơn Exp~B do
+        EfficientNet-B0 bị under-parameterized cho 80 lớp.
+  \item \textbf{Về F1:} Exp~A (ResNet50+BCE) và Exp~D (ResNet50+Focal)
+        đạt Test~F1 cao nhất ($0.6486$ và $0.6467$) nhờ threshold~$0.5$
+        phù hợp với BCE/Focal. Exp~C có F1 thấp ($0.5768$) --- đây là
+        vấn đề cần cải tiến trong Exp~G.
+  \item \textbf{Về overfitting:} Exp~C có gap lớn nhất ($0.2631$),
+        cho thấy CBAM trên dataset nhỏ dễ học noise hơn là đặc trưng tổng quát.
+  \item \textbf{Kết luận:} Kết hợp CBAM+EfficientNet không cải thiện mAP
+        so với baseline ResNet50+ASL, nhưng tạo ra \textit{cấu trúc nhẹ hơn}
+        ($3.63\text{M}$ vs $23.67\text{M}$ tham số) với potential lớn nếu
+        giải quyết được vấn đề threshold (dẫn đến Exp~G).
+\end{enumerate}
+
+%% ===================================================================
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

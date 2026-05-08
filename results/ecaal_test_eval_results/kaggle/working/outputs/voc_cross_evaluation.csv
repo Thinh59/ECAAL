@@ -1,0 +1,7 @@
+Experiment,VOC_mAP,VOC_Macro_F1,VOC_Micro_F1
+exp_C_efficientnet_cbam_asl,0.0,0.0,0.0
+exp_B_resnet_asl,0.0,0.0,0.0
+exp_E_resnet_cbam_asl,0.0,0.0,0.0
+exp_F_efficientnet_asl,0.0,0.0,0.0
+exp_D_resnet_focal,0.0,0.0,0.0
+exp_A_resnet_bce,0.0,0.0,0.0
