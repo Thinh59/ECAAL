@@ -1,6 +1,6 @@
 # 🚀 Multi-Label Image Classification: EfficientNet-B0 + CBAM + ASL
 
-> **Phiên bản đã sửa lỗi** — cập nhật COCO 2017, ASL đúng chuẩn paper gốc, fix bugs dataset/train/model
+> COCO 2017, ASL đúng chuẩn paper gốc, fix bugs dataset/train/model
 
 **Project**: Ablation study on multi-label classification combining:
 - **EfficientNet-B0** backbone with pretrained ImageNet weights
