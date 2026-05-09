@@ -1,0 +1,42 @@
+# Exp G — Cải tiến Exp C: EfficientNet-B3 + CBAM + ASL + RandAugment + Dropout 0.5
+#
+# Mục tiêu: vượt Exp C (Test mAP 0.6537) bằng 3 cải tiến đồng thời:
+#   1. Tăng backbone capacity: efficientnet_b0 (3.63M) → efficientnet_b3 (12M)
+#   2. Tăng regularization: dropout 0.3 → 0.5 để chống CBAM overfit
+#   3. Augmentation mạnh hơn: thêm RandAugment + RandomErasing (data.augment: strong)
+#
+# Phân tích lý do Exp C kém:
+#   - EfficientNet-B0 quá nhỏ (3.63M) cho bài toán 80 lớp COCO phức tạp
+#   - CBAM gây overfitting nặng: gap Exp C = 0.2631 vs Exp B = 0.1511 (không CBAM)
+#   - Augmentation yếu (chỉ RandomCrop + Flip + ColorJitter) không đủ
+#     để regularize CBAM khi dataset chỉ có 16k ảnh
+
+seed: 42
+num_epochs: 20
+output_dir: /kaggle/working/outputs
+
+model:
+  backbone: efficientnet_b3      # 12M params vs B0=3.63M → capacity gấp 3.3×
+  num_classes: 80
+  use_cbam: true
+  pretrained: true
+  dropout: 0.5                   # Tăng từ 0.3 → 0.5 để chống CBAM overfit
+
+loss:
+  name: asl
+  gamma_pos: 0
+  gamma_neg: 4
+  clip: 0.05
+
+optimizer:
+  lr: 2.0e-4                     # Giảm nhẹ so với B0 (3e-4) vì model lớn hơn
+  weight_decay: 1.0e-4
+
+data:
+  dataset: coco
+  data_root: /kaggle/input/datasets/awsaf49/coco-2017-dataset/coco2017
+  subset_ids_path: /kaggle/working/data/coco_subset
+  batch_size: 32                 # Giảm batch vì B3 tốn VRAM hơn B0
+  num_workers: 2
+  img_size: 300                  # B3 được thiết kế cho 300×300 (optimal resolution)
+  augment: strong                # Bật RandAugment + RandomErasing

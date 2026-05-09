@@ -27,7 +27,33 @@ from torchvision import transforms
 
 # ── Transforms ───────────────────────────────────────────────────────────────
 
-def get_train_transform(img_size: int = 224):
+def get_train_transform(img_size: int = 224, augment: str = 'standard'):
+    """
+    Trả về transform cho tập train.
+
+    augment='standard' (mặc định, tương thích Exp A-F):
+        RandomCrop + RandomHorizontalFlip + ColorJitter.
+
+    augment='strong' (dùng cho Exp G trở đi):
+        Thêm RandAugment (N=2, M=9) + RandomErasing để regularize mạnh hơn,
+        giúp CBAM không overfit trên dataset 16k ảnh.
+        RandAugment: Cubuk et al., NeurIPS 2020 — tự động chọn trong pool
+        20 phép augmentation (rotate, shear, equalize, posterize, ...).
+        RandomErasing: Zhong et al., AAAI 2020 — xóa ngẫu nhiên vùng ảnh
+        để model không phụ thuộc vào một vùng cố định (chống CBAM overfit).
+    """
+    if augment == 'strong':
+        return transforms.Compose([
+            transforms.Resize((img_size + 32, img_size + 32)),
+            transforms.RandomCrop(img_size),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.3, hue=0.1),
+            transforms.RandAugment(num_ops=2, magnitude=9),  # RandAugment
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            transforms.RandomErasing(p=0.25, scale=(0.02, 0.2)),  # RandomErasing
+        ])
+    # standard — giữ nguyên như Exp A-F để kết quả reproducible
     return transforms.Compose([
         transforms.Resize((img_size + 32, img_size + 32)),
         transforms.RandomCrop(img_size),
@@ -38,6 +64,7 @@ def get_train_transform(img_size: int = 224):
     ])
 
 def get_val_transform(img_size: int = 224):
+    """Transform cho val/test: không augment, chỉ resize và normalize."""
     return transforms.Compose([
         transforms.Resize((img_size, img_size)),
         transforms.ToTensor(),
@@ -239,15 +266,18 @@ def get_dataloaders(cfg: dict):
     """
     Trả về (train_loader, val_loader).
     cfg keys: dataset, data_root, batch_size, num_workers, img_size,
-              subset_ids_path (optional, chỉ cho COCO)
+              subset_ids_path (optional, chỉ cho COCO),
+              augment (optional: 'standard' | 'strong', mặc định 'standard')
     """
     name    = cfg.get('dataset', 'coco')
     root    = cfg['data_root']
     bs      = cfg.get('batch_size', 64)
     nw      = cfg.get('num_workers', 2)
     sz      = cfg.get('img_size', 224)
+    augment = cfg.get('augment', 'standard')  # 'standard' hoặc 'strong'
 
-    train_tf = get_train_transform(sz)
+    print(f"[DataLoader] augment={augment!r}, img_size={sz}, batch={bs}")
+    train_tf = get_train_transform(sz, augment=augment)
     val_tf   = get_val_transform(sz)
 
     if name == 'coco':

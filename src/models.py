@@ -85,15 +85,17 @@ class MultiLabelModel(nn.Module):
 
 
 def build_model(cfg: dict) -> MultiLabelModel:
+    # Hỗ trợ cả 'dropout' (Exp A–F) và 'dropout_rate' (Exp G+) để backward compatible
+    dropout_val = cfg.get('dropout_rate', cfg.get('dropout', 0.3))
     model = MultiLabelModel(
         backbone_name=cfg.get('backbone', 'efficientnet_b0'),
         num_classes=cfg.get('num_classes', 80),
         use_cbam=cfg.get('use_cbam', True),
         pretrained=cfg.get('pretrained', True),
-        dropout_rate=cfg.get('dropout', 0.3),
+        dropout_rate=dropout_val,
         cbam_mask_prob=cfg.get('cbam_mask_prob', 0.0),
     )
     print(f"[Model] {cfg.get('backbone', 'efficientnet_b0')} | CBAM={cfg.get('use_cbam', True)} | "
-          f"Params={model.num_parameters()/1e6:.2f}M | "
+          f"Dropout={dropout_val} | Params={model.num_parameters()/1e6:.2f}M | "
           f"FeatChannels={model.feature_channels}")
     return model
