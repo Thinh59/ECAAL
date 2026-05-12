@@ -117,15 +117,3 @@ CBAM sequentially applies **Channel Attention** (what to focus on) and **Spatial
 
 ---
 **Authors**: [Phan Huỳnh Châu Thịnh](23122019@student.hcmus.edu.vn), [Hoàng Văn Sang](23120350@student.hcmus.edu.vn)
-**,Description**: Updated README.md with comprehensive experiment results (A-F), detailed analysis from the project report, and updated repository structure/links. Removed premature references to Exp G as requested.
-**,IsArtifact**: false
-**,Overwrite**: true
-**,TargetFile**: d:\NA\Kì 6\Thị Giác Máy Tính\Project\ECAAL\README.md
-**,toolAction**: Updating the README.md file
-**,toolSummary**: Update README.md
-**,waitForPreviousTools**: true
-}<|placeholder_1740212000000|>function_code_1740212000000() {
-  // Mock function to represent the code snippet
-}
-function_code_1740212000000();
-// End of file: d:\NA\Kì 6\Thị Giác Máy Tính\Project\ECAAL\README.md
