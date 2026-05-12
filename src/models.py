@@ -3,14 +3,6 @@ models.py — MultiLabelModel hỗ trợ 3 variants ablation:
   Exp A: resnet50,        use_cbam=False, loss=BCE
   Exp B: resnet50,        use_cbam=False, loss=ASL
   Exp C: efficientnet_b0, use_cbam=True,  loss=ASL
-
-BUG CŨ đã sửa:
-  - timm 'resnet50' với features_only=True trả về 4 feature maps,
-    cuối cùng có shape (B, 2048, 7, 7) — đúng.
-  - timm 'efficientnet_b0' với features_only=True trả về 5 feature maps,
-    cuối cùng là (B, 1280, 7, 7) — đúng.
-  - Nhưng dummy forward phải chạy TRÊN DEVICE đúng khi khởi tạo.
-    → Sửa: tạo dummy trên CPU luôn (model chưa move sang GPU lúc __init__).
 """
 
 import torch
@@ -21,11 +13,7 @@ from cbam import CBAM
 
 class MultiLabelModel(nn.Module):
     """
-    Pipeline: Backbone → [CBAM Neck] → GAP → Dropout → FC → logits
-
-    Lưu ý: KHÔNG có Sigmoid trong forward — loss functions (BCEWithLogitsLoss,
-    ASL) tự xử lý sigmoid bên trong để ổn định số học.
-    Khi inference: probs = torch.sigmoid(model(x))
+    Pipeline: Backbone ->[CBAM Neck] -> GAP -> Dropout -> FC -> logits
     """
 
     def __init__(
@@ -40,7 +28,7 @@ class MultiLabelModel(nn.Module):
         super().__init__()
         self.use_cbam = use_cbam
 
-        # ── Backbone ─────────────────────────────────────────────────────────
+        # Backbone
         self.backbone = timm.create_model(
             backbone_name,
             pretrained=pretrained,
@@ -54,7 +42,7 @@ class MultiLabelModel(nn.Module):
             feats = self.backbone(dummy)
             self.feature_channels = feats[-1].shape[1]
 
-        # ── CBAM Neck (optional) ──────────────────────────────────────────────
+        # CBAM Neck (optional)
         if use_cbam:
             self.cbam = CBAM(
                 in_channels=self.feature_channels,
@@ -63,7 +51,7 @@ class MultiLabelModel(nn.Module):
                 mask_prob=cbam_mask_prob,
             )
 
-        # ── GAP + Head ────────────────────────────────────────────────────────
+        # GAP + Head
         self.gap = nn.AdaptiveAvgPool2d(1)
         self.head = nn.Sequential(
             nn.Dropout(p=dropout_rate),

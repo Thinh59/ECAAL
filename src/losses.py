@@ -1,12 +1,6 @@
 """
 losses.py — BCE, Focal Loss, Asymmetric Loss (ASL)
-ASL: "Asymmetric Loss For Multi-Label Classification", Ridnik et al., ICCV 2021
-     arXiv:2009.14119 | github.com/Alibaba-MIIL/ASL
-
-BUG CŨ đã sửa:
-  - xs_neg trong ASL phải là (1 - xs_pos) TRƯỚC khi shift, không phải sau
-  - asymmetric_w phải dùng xs_neg SAU khi shift (xs_neg_shifted) để đúng paper
-  - Chia mean theo batch size (sum / B), không phải mean toàn bộ phần tử
+ASL
 """
 
 import torch
@@ -45,24 +39,7 @@ class FocalLoss(nn.Module):
 
 class AsymmetricLoss(nn.Module):
     """
-    Asymmetric Loss (ASL) — implementation ĐÚNG CHUẨN paper gốc.
-    Ridnik et al., ICCV 2021. arXiv:2009.14119
-
-    ⚠️ BUG FIX: Theo paper, negative branch phải shift TRỰC TIẾP trên p (probability),
-    không phải trên (1-p). Formula đúng:
-      - p_shifted = max(p - m, 0)  ← margin TRỪ từ p
-      - Khi p < m: p_shifted = 0 → loss_neg = 0 (zero-out easy negatives)
-
-    Code cũ (SAI): xs_neg_shifted = (1-p) + m = (1.05 - p)
-      → Khi p = 1.0: xs_neg_shifted = 0.05 → log(0.05) = -3.0 (RẤT ÂM) ✗
-      → Khi p = 0.0: xs_neg_shifted = 1.0 → log(1.0) = 0 (zero-out) ✓
-      → NGỢ CHIỀU! Down-weight dễ, up-weight khó!
-
-    Cơ chế đúng:
-      - Positive branch (y=1): focusing weight (1-p)^gamma_pos, không shift
-      - Negative branch (y=0): shift p xuống bằng margin m TRƯỚC khi tính loss
-                               → các negative có p < m bị zero-out hoàn toàn
-                               → rồi áp focusing weight p_shifted^gamma_neg
+    Asymmetric Loss (ASL)
 
     Args:
         gamma_pos: focusing exponent cho positive (thường = 0, tức không down-weight)
@@ -86,10 +63,6 @@ class AsymmetricLoss(nn.Module):
         xs_pos = torch.sigmoid(logits)           # p(y=1)
         xs_neg = 1.0 - xs_pos                   # p(y=0) = 1 - p(y=1)
 
-        # ⚠️ CORRECT: Probability shifting cho negative branch
-        # Theo ASL paper: p_shifted = max(p - m, 0)
-        # p here is xs_pos, vì đó là xác suất để model dự đoán là positive
-        # Nếu p < m (threshold thấp), ta bỏ qua (zero-out)
         if self.clip > 0:
             # max(p - m, 0) → clamped minimum 0
             xs_pos_shifted = (xs_pos - self.clip).clamp(min=0)

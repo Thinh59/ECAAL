@@ -1,13 +1,5 @@
 """
 evaluate.py — mAP và Macro F1-score cho multi-label classification.
-
-Lưu ý: dùng sklearn.metrics.average_precision_score (area under PR curve),
-KHÔNG phải COCO eval API (khác nhau về interpolation).
-Khi báo cáo kết quả cần ghi rõ đang dùng phương pháp nào.
-
-FIXXXX: Bỏ torch.amp.mixed_precision trong evaluate_model — evaluate cần fp32 precision
-     để sigmoid + numpy chính xác. Việc dùng chế độ tự động ép kiểu trong eval không cần thiết và
-     có thể gây sai số nhỏ ảnh hưởng mAP.
 """
 
 import numpy as np
@@ -76,7 +68,6 @@ def evaluate_model(model: torch.nn.Module, loader, device: str = 'cuda') -> dict
     all_probs, all_targets = [], []
 
     for imgs, targets in loader:
-        # FIX: không dùng chế độ ép kiểu tự động ở đây — fp32 cho evaluation
         logits = model(imgs.to(device))
         probs  = torch.sigmoid(logits).cpu().numpy()
         all_probs.append(probs)

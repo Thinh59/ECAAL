@@ -1,14 +1,5 @@
 """
 dataset.py — COCO 2017 + Pascal VOC 2012 multi-label loaders
-
-BUGCŨUUU đã sửa:
-  1. Hardcode 'instances_{split}2014.json' → đổi thành 2017
-  2. create_coco_subset() gọi random.shuffle mà không stratify thực sự
-     → thêm stratified sampling theo số nhãn/ảnh
-  3. VOC: int(parts[1]) == 1 đúng, nhưng cần xử lý trường hợp file
-     {cls}_{split}.txt không tồn tại (đã có exists() check — OK)
-  4. DataLoader: num_workers>0 trên Kaggle đôi khi gây lỗi fork
-     → dùng num_workers=2, persistent_workers=True khi nw>0
 """
 
 import os
@@ -72,8 +63,7 @@ def get_val_transform(img_size: int = 224):
     ])
 
 
-# ── COCO 2017 ────────────────────────────────────────────────────────────────
-
+# COCO 2017
 class COCOMultiLabelDataset(Dataset):
     """
     MS-COCO 2017 multi-label classification dataset.
@@ -172,7 +162,7 @@ def create_coco_subset(coco_root: str, output_dir: str,
             selected += remaining[:n - len(selected)]
         return selected[:n]
 
-    # ── Train: từ train2017 ───────────────────────────────────────────────
+    # Train: từ train2017
     ann_train = os.path.join(coco_root, 'annotations', 'instances_train2017.json')
     with open(ann_train) as f:
         coco_train = json.load(f)
@@ -184,7 +174,7 @@ def create_coco_subset(coco_root: str, output_dir: str,
         json.dump(train_ids, f)
     print(f"[Subset] COCO 2017 train: {len(train_ids)} ids")
 
-    # ── Val + Test: cả hai từ val2017 (không trùng nhau) ──────────────────
+    # Val + Test: cả hai từ val2017 (không trùng nhau)
     ann_val = os.path.join(coco_root, 'annotations', 'instances_val2017.json')
     with open(ann_val) as f:
         coco_val = json.load(f)
@@ -209,7 +199,7 @@ def create_coco_subset(coco_root: str, output_dir: str,
     print(f"[Subset] COCO 2017 test: {len(test_ids)} ids (from val2017, no overlap with val)")
 
 
-# ── Pascal VOC 2012 ───────────────────────────────────────────────────────────
+# Pascal VOC 2012
 
 class VOCMultiLabelDataset(Dataset):
     """Pascal VOC 2012 multi-label (20 classes)."""
@@ -260,7 +250,7 @@ class VOCMultiLabelDataset(Dataset):
         return img, label
 
 
-# ── DataLoader factory ────────────────────────────────────────────────────────
+# DataLoader factory
 
 def get_dataloaders(cfg: dict):
     """

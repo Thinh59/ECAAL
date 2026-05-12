@@ -1,16 +1,5 @@
 """
 train.py — Training loop cho ablation study.
-
-BUG ĐÃ SỬA (so với master gốc):
-  1. loss_cfg.pop('name') làm MUT config dict → lần chạy thứ 2 trong cùng
-     process sẽ không tìm được 'name'. Fix: dùng copy trước khi pop.
-  2. torch.cuda.amp.autocast() deprecated trong PyTorch ≥ 2.0
-     → dùng torch.amp.autocast('cuda') thay thế
-  3. torch.cuda.amp.GradScaler() → torch.amp.GradScaler('cuda')
-
-QUAN TRỌNG — evaluate.py FIX:
-  evaluate_model() phải chạy fp32 (KHÔNG autocast) để sigmoid precision
-  cao → mAP chính xác. Đây là nguyên nhân master cho mAP ~0.56 thay vì ~0.75.
 """
 
 import os, sys, yaml, argparse
@@ -42,7 +31,7 @@ def train_one_epoch(model, loader, optimizer, criterion, scheduler, device, scal
             logits = model(imgs)
             loss   = criterion(logits, targets)
 
-            # --- Thí nghiệm 2: Consistency Alignment ---
+            # Thí nghiệm 2: Consistency Alignment
             if consistency_alpha > 0.0 and getattr(model, 'use_cbam', False):
                 # Lấy attention map của ảnh gốc
                 att_orig = model.cbam.spatial_att.last_scale
@@ -58,7 +47,7 @@ def train_one_epoch(model, loader, optimizer, criterion, scheduler, device, scal
                 
                 loss = loss + consistency_alpha * loss_cons
 
-            # --- Thí nghiệm 3: Sparsity Constraints ---
+            # Thí nghiệm 3: Sparsity Constraints
             if sparsity_lambda > 0.0 and getattr(model, 'use_cbam', False):
                 att_map = model.cbam.spatial_att.last_scale
                 loss_sparse = torch.mean(torch.abs(att_map))
@@ -149,7 +138,7 @@ def run(config_path: str):
                 best_map = metrics['mAP']
                 save_checkpoint(model, optimizer, epoch, metrics,
                                 str(out_dir / 'best.pth'))
-                print(f"  ✅ Best mAP: {best_map:.4f}")
+                print(f" Best mAP: {best_map:.4f}")
         else:
             print(f"  train_loss={train_loss:.4f}")
 
