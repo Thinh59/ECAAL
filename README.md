@@ -107,6 +107,7 @@ CBAM sequentially applies **Channel Attention** (what to focus on) and **Spatial
 - **Source Code**: [GitHub Repository](https://github.com/Thinh59/ECAAL)
 - **Kaggle Models**: [Models & Weights](https://www.kaggle.com/datasets/thinhha59/models/settings)
 - **Notebooks**: `cv-train-full-exp` (Training), `cv-eval-test-af` (Evaluation)
+- **Datasets**: [MS COCO 2017](https://www.kaggle.com/datasets/awsaf49/coco-2017-dataset)
 
 ---
 
