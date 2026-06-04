@@ -11,7 +11,7 @@ This project implements and evaluates a Multi-Label Image Classification (MLIC) 
 
 ## 📖 Project Overview
 
-![Architecture Diagram](assets/architecture_G.png)
+![Architecture Diagram](assets/architecture_expG.png)
 
 Multi-label classification is challenging due to severe label imbalance (e.g., MS COCO has ~80 classes with a positive-to-negative ratio of ~1:37). The proposed architecture (**Exp G**) combines:
 - **EfficientNet-B3**: A mid-capacity backbone (12M params) providing richer feature maps ($1536 \times 8 \times 8$) compared to B0.
